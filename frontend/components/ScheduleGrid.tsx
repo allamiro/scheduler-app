@@ -3,6 +3,7 @@
 import { ScheduleGridCell } from './ScheduleGridCell'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekDates, formatDateISO } from '@/lib/utils'
+import { formatEthiopianDate } from '@/lib/ethiopian-calendar'
 import {
   Table,
   TableBody,
@@ -72,7 +73,7 @@ export function ScheduleGrid({
               <TableCell className="text-center font-medium text-gray-900">
                 <div className="space-y-1">
                   <div className="text-sm">{date.toISOString().split('T')[0]}</div>
-                  <div className="text-xs text-gray-500">(EC Date)</div>
+                  <div className="text-xs text-gray-500">{formatEthiopianDate(date)}</div>
                 </div>
               </TableCell>
               <TableCell className="text-center font-medium text-gray-900">

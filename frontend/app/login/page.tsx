@@ -84,13 +84,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
-        
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Default credentials:</p>
-          <p>Admin: admin / admin</p>
-          <p>Editor: editor / editor</p>
-          <p>Viewer: viewer / viewer</p>
-        </div>
       </div>
     </div>
   )

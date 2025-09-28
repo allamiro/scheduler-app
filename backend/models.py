@@ -27,8 +27,9 @@ class Doctor(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True)
-    phone = Column(String)
+    email = Column(String, nullable=True)  # Made optional
+    phone = Column(String, nullable=True)  # Made optional
+    position = Column(String, nullable=True)  # Added position field
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

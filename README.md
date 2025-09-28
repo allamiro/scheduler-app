@@ -54,6 +54,7 @@ docker-compose exec api python seed_data.py
 
 - **Admin**: username=`admin`, password=`admin`
 - **Editor**: username=`editor`, password=`editor`
+- **Viewer**: username=`viewer`, password=`viewer`
 
 ## Usage
 

@@ -13,14 +13,19 @@ def create_default_capacities(db: Session):
     capacities = [
         (AssignmentType.ULTRASOUND_MORNING, 3),
         (AssignmentType.ULTRASOUND_AFTERNOON, 3),
-        (AssignmentType.XRAY, 2),
+        ("xray", 2),
         (AssignmentType.CT_SCAN, 1),
         (AssignmentType.MRI, 1),
         (AssignmentType.DUTY, 1),
     ]
     
     for assignment_type, max_capacity in capacities:
-        existing = db.query(Capacity).filter(Capacity.assignment_type == assignment_type).first()
+        # Handle string values for xray
+        if assignment_type == "xray":
+            existing = db.query(Capacity).filter(Capacity.assignment_type == "xray").first()
+        else:
+            existing = db.query(Capacity).filter(Capacity.assignment_type == assignment_type).first()
+        
         if not existing:
             capacity = Capacity(
                 assignment_type=assignment_type,
@@ -32,7 +37,7 @@ def create_default_capacities(db: Session):
     print("✓ Default capacities created")
 
 def create_default_users(db: Session):
-    """Create default admin and editor users"""
+    """Create default admin, editor, and viewer users"""
     # Admin user
     admin_user = db.query(User).filter(User.username == "admin").first()
     if not admin_user:
@@ -57,10 +62,23 @@ def create_default_users(db: Session):
         )
         db.add(editor_user)
     
+    # Viewer user
+    viewer_user = db.query(User).filter(User.username == "viewer").first()
+    if not viewer_user:
+        viewer_user = User(
+            username="viewer",
+            email="viewer@scheduler.com",
+            hashed_password=get_password_hash("viewer"),
+            role=UserRole.VIEWER,
+            is_active=True
+        )
+        db.add(viewer_user)
+    
     db.commit()
     print("✓ Default users created")
     print("  Admin: username=admin, password=admin")
     print("  Editor: username=editor, password=editor")
+    print("  Viewer: username=viewer, password=viewer")
 
 def create_sample_doctors(db: Session):
     """Create sample doctors"""
@@ -110,8 +128,9 @@ def main():
         
         print("\n🎉 Database seeded successfully!")
         print("\nDefault login credentials:")
-        print("Admin: admin / admin123")
-        print("Editor: editor / editor123")
+        print("Admin: admin / admin")
+        print("Editor: editor / editor")
+        print("Viewer: viewer / viewer")
         
     except Exception as e:
         print(f"❌ Error seeding database: {e}")

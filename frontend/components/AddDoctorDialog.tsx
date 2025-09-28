@@ -18,6 +18,7 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
     name: doctor?.name || '',
     email: doctor?.email || '',
     phone: doctor?.phone || '',
+    position: doctor?.position || '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -88,6 +89,19 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="Enter phone number"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+              Position
+            </label>
+            <Input
+              id="position"
+              type="text"
+              value={formData.position}
+              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              placeholder="Enter position/title"
             />
           </div>
           

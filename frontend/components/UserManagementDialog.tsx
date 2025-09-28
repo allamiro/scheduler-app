@@ -32,6 +32,30 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
   })
   const [showPassword, setShowPassword] = useState(false)
 
+  // Role counting
+  const getRoleCount = (role: UserRole) => {
+    return users.filter(user => user.role === role && user.is_active).length
+  }
+
+  const canCreateRole = (role: UserRole) => {
+    const counts = {
+      admin: getRoleCount('admin'),
+      editor: getRoleCount('editor'),
+      viewer: getRoleCount('viewer')
+    }
+    
+    switch (role) {
+      case 'admin':
+        return counts.admin < 1 // Max 1 admin
+      case 'editor':
+        return counts.editor < 4 // Max 4 editors
+      case 'viewer':
+        return true // No limit on viewers
+      default:
+        return false
+    }
+  }
+
   useEffect(() => {
     if (isOpen) {
       loadUsers()
@@ -321,8 +345,12 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="admin" disabled={!canCreateRole('admin')}>
+                          Admin {getRoleCount('admin') >= 1 ? '(Max reached)' : ''}
+                        </SelectItem>
+                        <SelectItem value="editor" disabled={!canCreateRole('editor')}>
+                          Editor {getRoleCount('editor') >= 4 ? '(Max reached)' : ''}
+                        </SelectItem>
                         <SelectItem value="viewer">Viewer</SelectItem>
                       </SelectContent>
                     </Select>

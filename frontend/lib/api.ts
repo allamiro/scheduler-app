@@ -68,13 +68,12 @@ class ApiClient {
 
   // Auth endpoints
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const formData = new FormData()
-    formData.append('username', credentials.username)
-    formData.append('password', credentials.password)
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login-json`, {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
     })
 
     if (!response.ok) {
@@ -192,13 +191,13 @@ class ApiClient {
         })
       }
 
-      // Password change endpoint
-      async changePassword(passwordData: ChangePasswordRequest): Promise<void> {
-        await this.request('/api/auth/change-password', {
-          method: 'POST',
-          body: JSON.stringify(passwordData),
-        })
-      }
-    }
+  // Password change endpoint
+  async changePassword(passwordData: ChangePasswordRequest): Promise<void> {
+    await this.request('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(passwordData),
+    })
+  }
+}
 
-    export const apiClient = new ApiClient()
+export const apiClient = new ApiClient()

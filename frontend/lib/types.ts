@@ -36,6 +36,7 @@ export interface Doctor {
   name: string
   email?: string
   phone?: string
+  position?: string
   is_active: boolean
 }
 
@@ -51,6 +52,7 @@ export interface Schedule {
   id: number
   week_start_date: string
   week_end_date: string
+  created_by: number
   assignments: Assignment[]
 }
 
