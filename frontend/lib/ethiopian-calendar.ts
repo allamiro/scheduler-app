@@ -71,3 +71,33 @@ export function formatDateWithEthiopian(date: Date): string {
   const ethiopian = formatEthiopianDate(date)
   return `${gregorian} / ${ethiopian}`
 }
+
+export function formatWeekRangeWithEthiopian(startDate: Date, endDate: Date): string {
+  // Format Gregorian week range
+  const gregorianStart = startDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  })
+  const gregorianEnd = endDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  })
+  const gregorianRange = `${gregorianStart} - ${gregorianEnd}`
+  
+  // Format Ethiopian week range
+  const ethiopianStart = gregorianToEthiopian(startDate)
+  const ethiopianEnd = gregorianToEthiopian(endDate)
+  
+  // If same month and year, show simplified format
+  if (ethiopianStart.month === ethiopianEnd.month && ethiopianStart.year === ethiopianEnd.year) {
+    const ethiopianRange = `${ethiopianStart.monthName} ${ethiopianStart.day} - ${ethiopianEnd.day}, ${ethiopianStart.year} (${ethiopianStart.yearName})`
+    return `${gregorianRange} / ${ethiopianRange}`
+  } else {
+    // Different months/years - show full format
+    const ethiopianStartFormatted = `${ethiopianStart.monthName} ${ethiopianStart.day}, ${ethiopianStart.year}`
+    const ethiopianEndFormatted = `${ethiopianEnd.monthName} ${ethiopianEnd.day}, ${ethiopianEnd.year} (${ethiopianEnd.yearName})`
+    const ethiopianRange = `${ethiopianStartFormatted} - ${ethiopianEndFormatted}`
+    return `${gregorianRange} / ${ethiopianRange}`
+  }
+}

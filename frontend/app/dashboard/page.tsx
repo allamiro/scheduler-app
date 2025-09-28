@@ -9,6 +9,7 @@ import { WeekNavigator } from '@/components/WeekNavigator'
 import { PublishDialog } from '@/components/PublishDialog'
 import { ChangePasswordDialog } from '@/components/ChangePasswordDialog'
 import { UserManagementDialog } from '@/components/UserManagementDialog'
+import { HolidayLegend } from '@/components/HolidayLegend'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
@@ -326,6 +327,10 @@ export default function DashboardPage() {
               </div>
               
               <div className="p-6">
+                <HolidayLegend 
+                  weekStart={currentWeek}
+                  weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
+                />
                 <ScheduleGrid
                   schedule={schedule}
                   doctors={doctors}

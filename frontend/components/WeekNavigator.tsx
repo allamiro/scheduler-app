@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { addWeeks, formatDateISO } from '@/lib/utils'
+import { formatWeekRangeWithEthiopian } from '@/lib/ethiopian-calendar'
 
 interface WeekNavigatorProps {
   currentWeek: Date
@@ -29,14 +30,7 @@ export function WeekNavigator({ currentWeek, onWeekChange }: WeekNavigatorProps)
     const weekEnd = new Date(weekStart)
     weekEnd.setDate(weekStart.getDate() + 6)
     
-    return `${weekStart.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    })} - ${weekEnd.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    })}`
+    return formatWeekRangeWithEthiopian(weekStart, weekEnd)
   }
 
   return (
