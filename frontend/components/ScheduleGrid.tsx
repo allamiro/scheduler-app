@@ -54,9 +54,6 @@ export function ScheduleGrid({
           <div className="text-sm md:text-base font-semibold text-blue-100">
             DEPARTMENT OF CLINICAL RADIOLOGY
           </div>
-          <div className="text-xs md:text-sm font-medium text-blue-200">
-            RADIOLOGISTS WORKING AND DUTY SCHEDULE
-          </div>
         </div>
       </div>
       

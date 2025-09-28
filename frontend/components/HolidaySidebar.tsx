@@ -36,7 +36,12 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
   // Filter holidays that fall within the current week
   const weekHolidays = SAMPLE_HOLIDAYS.filter(holiday => {
     const holidayDate = new Date(holiday.date)
-    return holidayDate >= weekStart && holidayDate <= weekEnd
+    // Normalize dates to compare only the date part (ignore time)
+    const holidayDateOnly = new Date(holidayDate.getFullYear(), holidayDate.getMonth(), holidayDate.getDate())
+    const weekStartOnly = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
+    const weekEndOnly = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate())
+    
+    return holidayDateOnly >= weekStartOnly && holidayDateOnly <= weekEndOnly
   })
 
   const getHolidayTypeColor = (type: Holiday['type']) => {
