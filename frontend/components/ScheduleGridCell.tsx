@@ -68,11 +68,11 @@ export function ScheduleGridCell({
       <TableCell 
         onDoubleClick={handleDoubleClick}
         className={`
-          min-h-[100px] min-w-[140px] p-3 relative
-          ${userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border-2 border-dashed border-gray-300' : 
-            isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border-2 border-red-200' : 
-            'bg-gradient-to-br from-white to-emerald-50 cursor-pointer hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 border-2 border-emerald-200 hover:border-blue-300'}
-          transition-all duration-300 ease-in-out rounded-lg shadow-sm hover:shadow-md
+          min-h-[60px] min-w-[120px] p-2 relative
+          ${userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border border-dashed border-gray-300' : 
+            isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border border-red-200' : 
+            'bg-gradient-to-br from-white to-emerald-50 cursor-pointer hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 border border-emerald-200 hover:border-blue-300'}
+          transition-all duration-300 ease-in-out rounded shadow-sm hover:shadow-md
         `}
         title={userRole === 'viewer' ? 'Read-only view' : 
                isAtCapacity ? 'At capacity' : 
@@ -103,16 +103,16 @@ export function ScheduleGridCell({
           ))}
           
           {assignments.length === 0 && !isAtCapacity && userRole !== 'viewer' && (
-            <div className="text-xs text-emerald-600 text-center py-6 flex flex-col items-center">
-              <div className="bg-emerald-100 rounded-full p-2 mb-2">
-                <Plus className="h-4 w-4 text-emerald-600" />
+            <div className="text-xs text-emerald-600 text-center py-3 flex flex-col items-center">
+              <div className="bg-emerald-100 rounded-full p-1 mb-1">
+                <Plus className="h-3 w-3 text-emerald-600" />
               </div>
-              <span className="font-medium">Double-click to assign</span>
+              <span className="font-medium text-xs">Double-click to assign</span>
             </div>
           )}
           
           {isAtCapacity && (
-            <div className="text-xs text-red-600 text-center mt-2 bg-red-100 rounded-lg px-3 py-2 font-medium">
+            <div className="text-xs text-red-600 text-center mt-1 bg-red-100 rounded px-2 py-1 font-medium">
               At capacity ({assignments.length}/{assignmentTypeConfig?.capacity})
             </div>
           )}

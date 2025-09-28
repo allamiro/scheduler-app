@@ -298,17 +298,9 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-4">
-        <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
-          {/* Holiday Sidebar - Smaller and responsive */}
-          <div className="xl:w-64 2xl:w-72 flex-shrink-0 order-2 xl:order-1">
-            <HolidaySidebar 
-              weekStart={currentWeek}
-              weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
-            />
-          </div>
-          
-          {/* Schedule Grid - Takes priority */}
-          <div className="flex-1 min-w-0 order-1 xl:order-2">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* Schedule Grid - Takes priority and most space */}
+          <div className="flex-1 min-w-0">
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex justify-between items-center mb-4">
@@ -334,7 +326,7 @@ export default function DashboardPage() {
                 />
               </div>
               
-              <div className="p-6">
+              <div className="p-4">
                 <ScheduleGrid
                   schedule={schedule}
                   doctors={doctors}
@@ -347,12 +339,19 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Doctor Sidebar - Smaller and responsive */}
-          <div className="xl:w-64 2xl:w-72 flex-shrink-0 order-3">
+          {/* Right Sidebar - Doctors and Holidays stacked */}
+          <div className="lg:w-80 xl:w-96 flex-shrink-0 space-y-4">
+            {/* Doctors Panel */}
             <DoctorSidebar 
               doctors={doctors}
               onDoctorUpdate={loadData}
               userRole={user?.role}
+            />
+            
+            {/* Holidays Panel */}
+            <HolidaySidebar 
+              weekStart={currentWeek}
+              weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
             />
           </div>
         </div>
