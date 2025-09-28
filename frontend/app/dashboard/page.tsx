@@ -7,10 +7,12 @@ import { ScheduleGrid } from '@/components/ScheduleGrid'
 import { DoctorSidebar } from '@/components/DoctorSidebar'
 import { WeekNavigator } from '@/components/WeekNavigator'
 import { PublishDialog } from '@/components/PublishDialog'
+import { ChangePasswordDialog } from '@/components/ChangePasswordDialog'
+import { UserManagementDialog } from '@/components/UserManagementDialog'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
-import { Calendar, Users, LogOut, Bug } from 'lucide-react'
+import { Calendar, Users, LogOut, Bug, Key, Settings } from 'lucide-react'
 
 // Debug logging system
 class DragDropLogger {
@@ -192,28 +194,36 @@ export default function DashboardPage() {
               <h1 className="text-xl font-semibold text-gray-900">Duty Scheduler</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Users className="h-4 w-4" />
-                <span>{user?.username} ({user?.role})</span>
-              </div>
-              
-              {/* Debug Panel Toggle */}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowDebugPanel(!showDebugPanel)}
-                className="flex items-center space-x-2"
-              >
-                <Bug className="h-4 w-4" />
-                <span>Debug</span>
-              </Button>
-              
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <Users className="h-4 w-4" />
+                    <span>{user?.username} ({user?.role})</span>
+                  </div>
+                  
+                  {/* Password Change */}
+                  <ChangePasswordDialog />
+                  
+                  {/* User Management (Admin only) */}
+                  {user?.role === 'admin' && (
+                    <UserManagementDialog />
+                  )}
+                  
+                  {/* Debug Panel Toggle */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowDebugPanel(!showDebugPanel)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Bug className="h-4 w-4" />
+                    <span>Debug</span>
+                  </Button>
+                  
+                  <Button variant="outline" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
           </div>
         </div>
       </header>

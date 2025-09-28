@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Assignment, AssignmentType, ASSIGNMENT_TYPES, Doctor } from '@/lib/types'
 import { DoctorCard } from './DoctorCard'
 import { X, Plus } from 'lucide-react'
+import { TableCell } from '@/components/ui/table'
 
 interface ScheduleGridCellProps {
   date: Date
@@ -61,16 +62,16 @@ export function ScheduleGridCell({
 
   return (
     <>
-      <td 
+      <TableCell 
         onDoubleClick={handleDoubleClick}
         className={`
-          border border-gray-300 px-2 py-3 min-h-[80px] min-w-[120px]
+          min-h-[100px] min-w-[140px] p-2
           ${isAtCapacity ? 'bg-red-50 cursor-not-allowed' : 'bg-white cursor-pointer hover:bg-blue-50'}
           transition-colors duration-200 relative
         `}
         title={isAtCapacity ? 'At capacity' : availableDoctors.length === 0 ? 'No available doctors' : 'Double-click to assign doctor'}
       >
-        <div className="space-y-1">
+        <div className="space-y-2">
           {assignments.map(assignment => (
             <div key={assignment.id} className="relative group">
               <DoctorCard 
@@ -92,19 +93,19 @@ export function ScheduleGridCell({
           ))}
           
           {assignments.length === 0 && !isAtCapacity && (
-            <div className="text-xs text-gray-400 text-center py-2 flex flex-col items-center">
+            <div className="text-xs text-gray-400 text-center py-4 flex flex-col items-center">
               <Plus className="h-4 w-4 mb-1" />
               Double-click to assign
             </div>
           )}
           
           {isAtCapacity && (
-            <div className="text-xs text-red-500 text-center mt-1">
+            <div className="text-xs text-red-500 text-center mt-2">
               At capacity ({assignments.length}/{assignmentTypeConfig?.capacity})
             </div>
           )}
         </div>
-      </td>
+      </TableCell>
 
       {/* Doctor Selector Modal */}
       {showDoctorSelector && (
@@ -133,9 +134,6 @@ export function ScheduleGridCell({
                   className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
                 >
                   <div className="font-medium text-gray-900">{doctor.name}</div>
-                  {doctor.email && (
-                    <div className="text-sm text-gray-500">{doctor.email}</div>
-                  )}
                 </button>
               ))}
             </div>

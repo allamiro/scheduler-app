@@ -1,9 +1,34 @@
+export type UserRole = 'admin' | 'editor' | 'viewer'
+
 export interface User {
   id: number
   username: string
   email: string
-  role: 'admin' | 'editor'
+  role: UserRole
   is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+}
+
+export interface CreateUserRequest {
+  username: string
+  email: string
+  password: string
+  role: UserRole
+  is_active: boolean
+}
+
+export interface UpdateUserRequest {
+  username?: string
+  email?: string
+  password?: string
+  role?: UserRole
+  is_active?: boolean
 }
 
 export interface Doctor {
@@ -41,8 +66,7 @@ export interface PublishedSchedule {
 export type AssignmentType = 
   | 'ultrasound_morning'
   | 'ultrasound_afternoon'
-  | 'xray_morning'
-  | 'xray_afternoon'
+  | 'xray'
   | 'ct_scan'
   | 'mri'
   | 'duty'
@@ -56,8 +80,7 @@ export interface AssignmentTypeConfig {
 export const ASSIGNMENT_TYPES: AssignmentTypeConfig[] = [
   { type: 'ultrasound_morning', label: 'ULTRASOUND Morning', capacity: 3 },
   { type: 'ultrasound_afternoon', label: 'ULTRASOUND Afternoon', capacity: 3 },
-  { type: 'xray_morning', label: 'X ray Morning', capacity: 2 },
-  { type: 'xray_afternoon', label: 'X ray Afternoon', capacity: 2 },
+  { type: 'xray', label: 'X ray', capacity: 2 },
   { type: 'ct_scan', label: 'CT-SCAN', capacity: 1 },
   { type: 'mri', label: 'MRI', capacity: 1 },
   { type: 'duty', label: 'Duty', capacity: 1 },

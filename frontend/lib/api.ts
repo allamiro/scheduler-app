@@ -6,7 +6,10 @@ import {
   PublishedSchedule, 
   LoginCredentials, 
   AuthResponse,
-  AssignmentType 
+  AssignmentType,
+  ChangePasswordRequest,
+  CreateUserRequest,
+  UpdateUserRequest
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
@@ -160,9 +163,42 @@ class ApiClient {
     return this.request<PublishedSchedule[]>('/api/published')
   }
 
-  async getPublishedSchedule(slug: string): Promise<{ html_content: string }> {
-    return this.request<{ html_content: string }>(`/api/published/${slug}`)
-  }
-}
+      async getPublishedSchedule(slug: string): Promise<{ html_content: string }> {
+        return this.request<{ html_content: string }>(`/api/published/${slug}`)
+      }
 
-export const apiClient = new ApiClient()
+      // User management endpoints
+      async getUsers(): Promise<User[]> {
+        return this.request<User[]>('/api/users/')
+      }
+
+      async createUser(user: CreateUserRequest): Promise<User> {
+        return this.request<User>('/api/users/', {
+          method: 'POST',
+          body: JSON.stringify(user),
+        })
+      }
+
+      async updateUser(id: number, user: UpdateUserRequest): Promise<User> {
+        return this.request<User>(`/api/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(user),
+        })
+      }
+
+      async deleteUser(id: number): Promise<void> {
+        await this.request(`/api/users/${id}`, {
+          method: 'DELETE',
+        })
+      }
+
+      // Password change endpoint
+      async changePassword(passwordData: ChangePasswordRequest): Promise<void> {
+        await this.request('/api/auth/change-password', {
+          method: 'POST',
+          body: JSON.stringify(passwordData),
+        })
+      }
+    }
+
+    export const apiClient = new ApiClient()

@@ -41,12 +41,6 @@ export function DoctorCard({ doctor, isDragging = false, isAssignment = false }:
       )}
     >
       <div className="font-medium text-gray-900">{doctor.name}</div>
-      {doctor.email && (
-        <div className="text-xs text-gray-500 mt-1">{doctor.email}</div>
-      )}
-      {doctor.phone && (
-        <div className="text-xs text-gray-500">{doctor.phone}</div>
-      )}
     </div>
   )
 }

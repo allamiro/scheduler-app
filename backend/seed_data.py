@@ -13,8 +13,7 @@ def create_default_capacities(db: Session):
     capacities = [
         (AssignmentType.ULTRASOUND_MORNING, 3),
         (AssignmentType.ULTRASOUND_AFTERNOON, 3),
-        (AssignmentType.XRAY_MORNING, 2),
-        (AssignmentType.XRAY_AFTERNOON, 2),
+        (AssignmentType.XRAY, 2),
         (AssignmentType.CT_SCAN, 1),
         (AssignmentType.MRI, 1),
         (AssignmentType.DUTY, 1),

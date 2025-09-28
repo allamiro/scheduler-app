@@ -50,8 +50,7 @@ class Schedule(Base):
 class AssignmentType(str, enum.Enum):
     ULTRASOUND_MORNING = "ultrasound_morning"
     ULTRASOUND_AFTERNOON = "ultrasound_afternoon"
-    XRAY_MORNING = "xray_morning"
-    XRAY_AFTERNOON = "xray_afternoon"
+    XRAY = "xray"
     CT_SCAN = "ct_scan"
     MRI = "mri"
     DUTY = "duty"

@@ -3,6 +3,14 @@
 import { ScheduleGridCell } from './ScheduleGridCell'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekDates, formatDateISO } from '@/lib/utils'
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table'
 
 interface ScheduleGridProps {
   schedule: Schedule | null
@@ -33,35 +41,43 @@ export function ScheduleGrid({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-50">
-            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">
+    <div className="rounded-lg border bg-white shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[120px] text-center font-semibold text-gray-700">
               Date (EC)
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">
+            </TableHead>
+            <TableHead className="w-[100px] text-center font-semibold text-gray-700">
               Day
-            </th>
+            </TableHead>
             {ASSIGNMENT_TYPES.map(type => (
-              <th key={type.type} className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-700 min-w-[120px]">
-                {type.label}
-                <div className="text-xs font-normal text-gray-500">
-                  (Max: {type.capacity})
+              <TableHead 
+                key={type.type} 
+                className="min-w-[140px] text-center font-semibold text-gray-700"
+              >
+                <div className="space-y-1">
+                  <div>{type.label}</div>
+                  <div className="text-xs font-normal text-gray-500">
+                    (Max: {type.capacity})
+                  </div>
                 </div>
-              </th>
+              </TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {weekDates.map((date, dateIndex) => (
-            <tr key={date.toISOString()} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">
-                {date.toISOString().split('T')[0]}
-              </td>
-              <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">
-                {date.toLocaleDateString('en-US', { weekday: 'long' })}
-              </td>
+            <TableRow key={date.toISOString()} className="hover:bg-gray-50/50">
+              <TableCell className="text-center font-medium text-gray-900">
+                <div className="space-y-1">
+                  <div className="text-sm">{date.toISOString().split('T')[0]}</div>
+                  <div className="text-xs text-gray-500">(EC Date)</div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center font-medium text-gray-900">
+                {date.toLocaleDateString('en-US', { weekday: 'short' })}
+              </TableCell>
               {ASSIGNMENT_TYPES.map(assignmentType => (
                 <ScheduleGridCell
                   key={`${date.toISOString()}_${assignmentType.type}`}
@@ -73,10 +89,10 @@ export function ScheduleGrid({
                   onAssignmentCreate={onAssignmentCreate}
                 />
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
