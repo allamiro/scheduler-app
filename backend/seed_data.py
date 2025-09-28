@@ -13,18 +13,14 @@ def create_default_capacities(db: Session):
     capacities = [
         (AssignmentType.ULTRASOUND_MORNING, 3),
         (AssignmentType.ULTRASOUND_AFTERNOON, 3),
-        ("xray", 2),
+        (AssignmentType.XRAY, 2),
         (AssignmentType.CT_SCAN, 1),
         (AssignmentType.MRI, 1),
         (AssignmentType.DUTY, 1),
     ]
     
     for assignment_type, max_capacity in capacities:
-        # Handle string values for xray
-        if assignment_type == "xray":
-            existing = db.query(Capacity).filter(Capacity.assignment_type == "xray").first()
-        else:
-            existing = db.query(Capacity).filter(Capacity.assignment_type == assignment_type).first()
+        existing = db.query(Capacity).filter(Capacity.assignment_type == assignment_type).first()
         
         if not existing:
             capacity = Capacity(

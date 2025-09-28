@@ -56,12 +56,12 @@ class Schedule(Base):
     assignments = relationship("Assignment", back_populates="schedule", cascade="all, delete-orphan")
 
 class AssignmentType(str, enum.Enum):
-    ULTRASOUND_MORNING = "ultrasound_morning"
-    ULTRASOUND_AFTERNOON = "ultrasound_afternoon"
-    XRAY = "xray"
-    CT_SCAN = "ct_scan"
-    MRI = "mri"
-    DUTY = "duty"
+    ULTRASOUND_MORNING = "ULTRASOUND_MORNING"
+    ULTRASOUND_AFTERNOON = "ULTRASOUND_AFTERNOON"
+    XRAY = "XRAY"
+    CT_SCAN = "CT_SCAN"
+    MRI = "MRI"
+    DUTY = "DUTY"
 
 class Assignment(Base):
     __tablename__ = "assignments"

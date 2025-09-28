@@ -69,12 +69,12 @@ export interface PublishedSchedule {
 }
 
 export type AssignmentType = 
-  | 'ultrasound_morning'
-  | 'ultrasound_afternoon'
-  | 'xray'
-  | 'ct_scan'
-  | 'mri'
-  | 'duty'
+  | 'ULTRASOUND_MORNING'
+  | 'ULTRASOUND_AFTERNOON'
+  | 'XRAY'
+  | 'CT_SCAN'
+  | 'MRI'
+  | 'DUTY'
 
 export interface AssignmentTypeConfig {
   type: AssignmentType
@@ -83,12 +83,12 @@ export interface AssignmentTypeConfig {
 }
 
 export const ASSIGNMENT_TYPES: AssignmentTypeConfig[] = [
-  { type: 'ultrasound_morning', label: 'ULTRASOUND Morning', capacity: 3 },
-  { type: 'ultrasound_afternoon', label: 'ULTRASOUND Afternoon', capacity: 3 },
-  { type: 'xray', label: 'X ray', capacity: 2 },
-  { type: 'ct_scan', label: 'CT-SCAN', capacity: 1 },
-  { type: 'mri', label: 'MRI', capacity: 1 },
-  { type: 'duty', label: 'Duty', capacity: 1 },
+  { type: 'ULTRASOUND_MORNING', label: 'ULTRASOUND Morning', capacity: 3 },
+  { type: 'ULTRASOUND_AFTERNOON', label: 'ULTRASOUND Afternoon', capacity: 3 },
+  { type: 'XRAY', label: 'X ray', capacity: 2 },
+  { type: 'CT_SCAN', label: 'CT-SCAN', capacity: 1 },
+  { type: 'MRI', label: 'MRI', capacity: 1 },
+  { type: 'DUTY', label: 'Duty', capacity: 1 },
 ]
 
 export interface LoginCredentials {
