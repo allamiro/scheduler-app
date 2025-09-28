@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ScheduleGrid } from '@/components/ScheduleGrid'
-import { DoctorSidebar } from '@/components/DoctorSidebar'
+import { ScheduleGridDnD } from '@/components/ScheduleGridDnD'
+import { DoctorSidebarDnD } from '@/components/DoctorSidebarDnD'
 import { WeekNavigator } from '@/components/WeekNavigator'
 import { PublishDialog } from '@/components/PublishDialog'
 import { ChangePasswordDialog } from '@/components/ChangePasswordDialog'
 import { UserManagementDialog } from '@/components/UserManagementDialog'
 import { HolidaySidebar } from '@/components/HolidaySidebar'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection } from '@dnd-kit/core'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
@@ -55,6 +56,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [showDebugPanel, setShowDebugPanel] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeDoctor, setActiveDoctor] = useState<Doctor | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -170,6 +173,98 @@ export default function DashboardPage() {
       })
       console.error('Failed to delete assignment:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete assignment')
+    }
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    setActiveId(active.id as string)
+    
+    // Find the doctor being dragged
+    if (active.id.toString().startsWith('doctor-')) {
+      const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
+      const doctor = doctors.find(d => d.id === doctorId)
+      setActiveDoctor(doctor || null)
+    }
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    
+    console.log('Drag end event:', { activeId: active.id, overId: over?.id })
+    
+    setActiveId(null)
+    setActiveDoctor(null)
+    
+    if (!over) {
+      console.log('No drop target found')
+      return
+    }
+    
+    // Check if we're dropping on a schedule cell
+    if (over.id.toString().includes('_') && active.id.toString().startsWith('doctor-')) {
+      console.log('Dropping doctor on schedule cell')
+      
+      // Check user role first
+      if (user?.role === 'viewer') {
+        console.log('Viewer cannot make assignments')
+        alert('You do not have permission to make assignments!')
+        return
+      }
+      
+      const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
+      const [dateStr, assignmentType] = over.id.toString().split('_')
+      
+      console.log('Assignment details:', { doctorId, dateStr, assignmentType })
+      
+      // Find the assignment type configuration
+      const assignmentTypeConfig = ASSIGNMENT_TYPES.find(type => type.type === assignmentType)
+      
+      if (!assignmentTypeConfig) {
+        console.log('Assignment type not found:', assignmentType)
+        alert('Invalid assignment type!')
+        return
+      }
+      
+      // Check if the doctor is available for this assignment
+      const existingAssignments = schedule?.assignments.filter(
+        a => a.assignment_date === dateStr && a.assignment_type === assignmentType
+      ) || []
+      
+      console.log('Capacity check:', { 
+        existingCount: existingAssignments.length, 
+        maxCapacity: assignmentTypeConfig.capacity,
+        assignmentType: assignmentTypeConfig.label,
+        assignmentTypeKey: assignmentType
+      })
+      
+      // Check capacity
+      if (existingAssignments.length >= assignmentTypeConfig.capacity) {
+        console.log('Assignment at capacity')
+        alert(`This assignment is at capacity! (${existingAssignments.length}/${assignmentTypeConfig.capacity})`)
+        return
+      }
+      
+      // Check if doctor is already assigned to this date
+      const doctorAssignedToday = schedule?.assignments.some(
+        a => a.doctor_id === doctorId && a.assignment_date === dateStr
+      )
+      
+      if (doctorAssignedToday) {
+        console.log('Doctor already assigned today')
+        alert('This doctor is already assigned to this date!')
+        return
+      }
+      
+      console.log('Creating assignment')
+      // Create the assignment
+      handleAssignmentCreate({
+        doctor_id: doctorId,
+        assignment_date: dateStr,
+        assignment_type: assignmentType as AssignmentType
+      })
+    } else {
+      console.log('Invalid drop target or not a doctor')
     }
   }
 
@@ -297,65 +392,82 @@ export default function DashboardPage() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-4">
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          {/* Schedule Grid - Takes priority and most space */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Weekly Schedule
-                  </h2>
-                  {schedule?.id && user?.role !== 'viewer' && (
-                    <PublishDialog 
-                      scheduleId={schedule.id}
-                      weekStart={currentWeek}
-                      isPublished={schedule.is_published}
-                      onUnpublish={() => {
-                        // Reload schedule data after unpublishing
-                        loadData()
-                      }}
-                    />
-                  )}
+      <DndContext
+        collisionDetection={rectIntersection}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-4">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+            {/* Schedule Grid - Takes priority and most space */}
+            <div className="flex-1 min-w-0">
+              <div className="bg-white rounded-lg shadow-sm border">
+                <div className="p-6 border-b">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Weekly Schedule
+                    </h2>
+                    {schedule?.id && user?.role !== 'viewer' && (
+                      <PublishDialog 
+                        scheduleId={schedule.id}
+                        weekStart={currentWeek}
+                        isPublished={schedule.is_published}
+                        onUnpublish={() => {
+                          // Reload schedule data after unpublishing
+                          loadData()
+                        }}
+                      />
+                    )}
+                  </div>
+                  
+                  <WeekNavigator 
+                    currentWeek={currentWeek}
+                    onWeekChange={handleWeekChange}
+                  />
                 </div>
                 
-                <WeekNavigator 
-                  currentWeek={currentWeek}
-                  onWeekChange={handleWeekChange}
-                />
-              </div>
-              
-              <div className="p-4">
-                <ScheduleGrid
-                  schedule={schedule}
-                  doctors={doctors}
-                  currentWeek={currentWeek}
-                  userRole={user?.role}
-                  onAssignmentCreate={handleAssignmentCreate}
-                  onAssignmentDelete={handleAssignmentDelete}
-                />
+                <div className="p-4">
+                  <ScheduleGridDnD
+                    schedule={schedule}
+                    doctors={doctors}
+                    currentWeek={currentWeek}
+                    userRole={user?.role}
+                    onAssignmentCreate={handleAssignmentCreate}
+                    onAssignmentDelete={handleAssignmentDelete}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Sidebar - Doctors and Holidays stacked */}
-          <div className="lg:w-80 xl:w-96 flex-shrink-0 space-y-4">
-            {/* Doctors Panel */}
-            <DoctorSidebar 
-              doctors={doctors}
-              onDoctorUpdate={loadData}
-              userRole={user?.role}
-            />
-            
-            {/* Holidays Panel */}
-            <HolidaySidebar 
-              weekStart={currentWeek}
-              weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
-            />
+            {/* Right Sidebar - Doctors and Holidays stacked */}
+            <div className="lg:w-80 xl:w-96 flex-shrink-0 space-y-4">
+              {/* Doctors Panel */}
+              <DoctorSidebarDnD 
+                doctors={doctors}
+                onDoctorUpdate={loadData}
+                userRole={user?.role}
+              />
+              
+              {/* Holidays Panel */}
+              <HolidaySidebar 
+                weekStart={currentWeek}
+                weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
+              />
+            </div>
           </div>
         </div>
-      </div>
+
+        <DragOverlay>
+          {activeDoctor ? (
+            <div className="bg-white border-2 border-blue-400 rounded-lg p-3 shadow-xl opacity-90">
+              <div className="font-semibold text-gray-900">{activeDoctor.name}</div>
+              {activeDoctor.position && (
+                <div className="text-xs text-gray-600 mt-1 font-medium">{activeDoctor.position}</div>
+              )}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   )
 }
