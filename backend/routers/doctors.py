@@ -4,27 +4,84 @@ from sqlalchemy.exc import IntegrityError
 from database import get_db
 from models import Doctor, Assignment
 from auth import get_current_user
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 
 router = APIRouter()
 
 class DoctorCreate(BaseModel):
     name: str
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
+    position: Optional[str] = None
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        if v is None or v == '' or v.strip() == '':
+            return None
+        # Only validate email format if it's not empty
+        # Use a simple regex check for email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, v.strip()):
+            raise ValueError('Invalid email format')
+        return v.strip()
+    
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None or v == '':
+            return None
+        return v
+    
+    @field_validator('position')
+    @classmethod
+    def validate_position(cls, v):
+        if v is None or v == '':
+            return None
+        return v
 
 class DoctorUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
+    position: Optional[str] = None
     is_active: Optional[bool] = None
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        if v is None or v == '' or v.strip() == '':
+            return None
+        # Only validate email format if it's not empty
+        # Use a simple regex check for email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, v.strip()):
+            raise ValueError('Invalid email format')
+        return v.strip()
+    
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None or v == '':
+            return None
+        return v
+    
+    @field_validator('position')
+    @classmethod
+    def validate_position(cls, v):
+        if v is None or v == '':
+            return None
+        return v
 
 class DoctorResponse(BaseModel):
     id: int
     name: str
     email: Optional[str]
     phone: Optional[str]
+    position: Optional[str]
     is_active: bool
 
     class Config:
