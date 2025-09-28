@@ -11,9 +11,11 @@ import { ExternalLink, Copy, Check } from 'lucide-react'
 interface PublishDialogProps {
   scheduleId: number
   weekStart: Date
+  isPublished?: boolean
+  onUnpublish?: () => void
 }
 
-export function PublishDialog({ scheduleId, weekStart }: PublishDialogProps) {
+export function PublishDialog({ scheduleId, weekStart, isPublished = false, onUnpublish }: PublishDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [publishedSchedule, setPublishedSchedule] = useState<PublishedSchedule | null>(null)
   const [loading, setLoading] = useState(false)
@@ -26,6 +28,26 @@ export function PublishDialog({ scheduleId, weekStart }: PublishDialogProps) {
       setPublishedSchedule(result)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to publish schedule')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUnpublish = async () => {
+    if (!confirm('Are you sure you want to unpublish this schedule? This will remove all published versions and allow editing.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      await apiClient.unpublishSchedule(scheduleId)
+      alert('Schedule unpublished successfully!')
+      setIsOpen(false)
+      if (onUnpublish) {
+        onUnpublish()
+      }
+    } catch (error) {
+      alert(`Failed to unpublish schedule: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
@@ -65,23 +87,26 @@ export function PublishDialog({ scheduleId, weekStart }: PublishDialogProps) {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>
-        Publish Schedule
+      <Button onClick={() => setIsOpen(true)} variant={isPublished ? "destructive" : "default"}>
+        {isPublished ? "Unpublish Schedule" : "Publish Schedule"}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Publish Schedule</DialogTitle>
+            <DialogTitle>{isPublished ? "Unpublish Schedule" : "Publish Schedule"}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="text-sm text-gray-600">
-              Publishing schedule for: <strong>{formatWeekRange(weekStart)}</strong>
+              {isPublished ? "Unpublishing" : "Publishing"} schedule for: <strong>{formatWeekRange(weekStart)}</strong>
             </div>
             
             <div className="text-sm text-gray-600">
-              This will create a read-only, printable version of the schedule that can be shared publicly.
+              {isPublished 
+                ? "This will remove all published versions and allow editing of the schedule."
+                : "This will create a read-only, printable version of the schedule that can be shared publicly."
+              }
             </div>
 
             {publishedSchedule ? (
@@ -124,10 +149,18 @@ export function PublishDialog({ scheduleId, weekStart }: PublishDialogProps) {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsOpen(false)}>
-              {publishedSchedule ? 'Close' : 'Cancel'}
+              Cancel
             </Button>
             
-            {publishedSchedule ? (
+            {isPublished ? (
+              <Button 
+                variant="destructive" 
+                onClick={handleUnpublish} 
+                disabled={loading}
+              >
+                {loading ? 'Unpublishing...' : 'Unpublish'}
+              </Button>
+            ) : publishedSchedule ? (
               <Button onClick={handleOpenLink} className="flex items-center space-x-2">
                 <ExternalLink className="h-4 w-4" />
                 <span>View Published</span>

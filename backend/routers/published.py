@@ -192,6 +192,9 @@ async def publish_schedule(
     # Get week dates
     week_dates = [schedule.week_start_date + timedelta(days=i) for i in range(7)]
     
+    # Validate schedule completeness before publishing
+    validate_schedule_completeness(assignments, week_dates)
+    
     # Organize assignments by date and type
     assignments_dict = {}
     for assignment in assignments:
@@ -229,6 +232,10 @@ async def publish_schedule(
         html_content=html_content
     )
     db.add(published_schedule)
+    
+    # Mark schedule as published
+    schedule.is_published = True
+    
     db.commit()
     db.refresh(published_schedule)
     
@@ -272,3 +279,41 @@ async def get_published_schedule(slug: str, db: Session = Depends(get_db)):
         )
     
     return {"html_content": published_schedule.html_content}
+
+@router.delete("/{schedule_id}/unpublish")
+async def unpublish_schedule(
+    schedule_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Unpublish a schedule to allow editing"""
+    # Check if user has permission (admin or editor)
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins and editors can unpublish schedules"
+        )
+    
+    # Get the schedule
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    
+    if not schedule.is_published:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Schedule is not published"
+        )
+    
+    # Mark schedule as unpublished
+    schedule.is_published = False
+    
+    # Delete all published versions of this schedule
+    db.query(PublishedSchedule).filter(PublishedSchedule.schedule_id == schedule_id).delete()
+    
+    db.commit()
+    
+    return {"message": "Schedule unpublished successfully"}

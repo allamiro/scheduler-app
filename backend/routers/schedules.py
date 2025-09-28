@@ -206,6 +206,13 @@ async def create_assignment(
             detail="Schedule not found"
         )
     
+    # Check if schedule is published
+    if schedule.is_published:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot edit published schedule. Please unpublish it first."
+        )
+    
     # Validate assignment constraints
     validate_assignment(db, assignment_data, schedule_id)
     
@@ -236,6 +243,14 @@ async def delete_assignment(
     current_user = Depends(get_current_user)
 ):
     """Delete an assignment"""
+    # Check if schedule is published
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if schedule and schedule.is_published:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot edit published schedule. Please unpublish it first."
+        )
+    
     assignment = db.query(Assignment).filter(
         and_(
             Assignment.id == assignment_id,

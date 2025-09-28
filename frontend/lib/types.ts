@@ -53,6 +53,7 @@ export interface Schedule {
   week_start_date: string
   week_end_date: string
   created_by: number
+  is_published: boolean
   assignments: Assignment[]
 }
 

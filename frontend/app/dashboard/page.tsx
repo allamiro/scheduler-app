@@ -12,7 +12,7 @@ import { UserManagementDialog } from '@/components/UserManagementDialog'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
-import { Calendar, Users, LogOut, Bug, Key, Settings } from 'lucide-react'
+import { Calendar, Users, LogOut, Bug, Key, Settings, History } from 'lucide-react'
 
 // Debug logging system
 class DragDropLogger {
@@ -208,6 +208,19 @@ export default function DashboardPage() {
                     <UserManagementDialog />
                   )}
                   
+                  {/* Published History (Admin and Editor only) */}
+                  {(user?.role === 'admin' || user?.role === 'editor') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push('/published-history')}
+                      className="flex items-center space-x-2"
+                    >
+                      <History className="h-4 w-4" />
+                      <span>Published History</span>
+                    </Button>
+                  )}
+                  
                   {/* Debug Panel Toggle */}
                   <Button 
                     variant="outline" 
@@ -297,6 +310,11 @@ export default function DashboardPage() {
                     <PublishDialog 
                       scheduleId={schedule.id}
                       weekStart={currentWeek}
+                      isPublished={schedule.is_published}
+                      onUnpublish={() => {
+                        // Reload schedule data after unpublishing
+                        loadData()
+                      }}
                     />
                   )}
                 </div>

@@ -179,6 +179,12 @@ class ApiClient {
     })
   }
 
+  async unpublishSchedule(scheduleId: number): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/api/published/${scheduleId}/unpublish`, {
+      method: 'DELETE',
+    })
+  }
+
   async getPublishedSchedules(): Promise<PublishedSchedule[]> {
     return this.request<PublishedSchedule[]>('/api/published')
   }

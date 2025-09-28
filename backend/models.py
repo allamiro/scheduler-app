@@ -41,6 +41,7 @@ class Schedule(Base):
     week_start_date = Column(DateTime, nullable=False)  # Monday of the week
     week_end_date = Column(DateTime, nullable=False)    # Sunday of the week
     created_by = Column(Integer, ForeignKey("users.id"))
+    is_published = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
