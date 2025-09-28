@@ -42,8 +42,8 @@ export function ScheduleGridCellDnD({
     doctor.status === 'ACTIVE'
   )
 
-  // Create unique droppable ID for this cell
-  const cellId = `${date.toISOString().split('T')[0]}_${assignmentType}`
+  // Create unique droppable ID for this cell using a separator that won't conflict with assignment types
+  const cellId = `${date.toISOString().split('T')[0]}||${assignmentType}`
   
   const { isOver, setNodeRef } = useDroppable({
     id: cellId,

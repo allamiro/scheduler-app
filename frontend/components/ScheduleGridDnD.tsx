@@ -102,7 +102,7 @@ export function ScheduleGridDnD({
                 </TableCell>
                 {ASSIGNMENT_TYPES.map(assignmentType => (
                   <ScheduleGridCellDnD
-                    key={`${date.toISOString()}_${assignmentType.type}`}
+                    key={`${date.toISOString().split('T')[0]}||${assignmentType.type}`}
                     date={date}
                     assignmentType={assignmentType.type}
                     assignments={getAssignmentsForCell(date, assignmentType.type)}

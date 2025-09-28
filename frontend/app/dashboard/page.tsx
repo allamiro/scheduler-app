@@ -14,7 +14,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
-import { Calendar, Users, LogOut, Bug, Key, Settings, History } from 'lucide-react'
+import { Calendar, Users, LogOut, Bug, Key, Settings, History, User } from 'lucide-react'
 
 // Debug logging system
 class DragDropLogger {
@@ -202,8 +202,10 @@ export default function DashboardPage() {
     }
     
     // Check if we're dropping on a schedule cell
-    if (over.id.toString().includes('_') && active.id.toString().startsWith('doctor-')) {
+    if (over.id.toString().includes('||') && active.id.toString().startsWith('doctor-')) {
       console.log('Dropping doctor on schedule cell')
+      console.log('Raw over.id:', over.id.toString())
+      console.log('Raw active.id:', active.id.toString())
       
       // Check user role first
       if (user?.role === 'viewer') {
@@ -213,16 +215,33 @@ export default function DashboardPage() {
       }
       
       const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
-      const [dateStr, assignmentType] = over.id.toString().split('_')
+      const overIdParts = over.id.toString().split('||')
+      console.log('Split over.id parts:', overIdParts)
+      
+      if (overIdParts.length !== 2) {
+        console.log('Invalid droppable ID format:', over.id.toString())
+        alert('Invalid drop target format!')
+        return
+      }
+      
+      const [dateStr, assignmentType] = overIdParts
       
       console.log('Assignment details:', { doctorId, dateStr, assignmentType })
+      console.log('Available assignment types:', ASSIGNMENT_TYPES.map(t => t.type))
+      console.log('Assignment type match check:', {
+        assignmentType,
+        isXray: assignmentType === 'xray',
+        isUltrasoundMorning: assignmentType === 'ultrasound_morning',
+        isCtScan: assignmentType === 'ct_scan'
+      })
       
       // Find the assignment type configuration
       const assignmentTypeConfig = ASSIGNMENT_TYPES.find(type => type.type === assignmentType)
       
       if (!assignmentTypeConfig) {
         console.log('Assignment type not found:', assignmentType)
-        alert('Invalid assignment type!')
+        console.log('Available types:', ASSIGNMENT_TYPES.map(t => t.type))
+        alert(`Invalid assignment type: ${assignmentType}`)
         return
       }
       
@@ -460,7 +479,10 @@ export default function DashboardPage() {
         <DragOverlay>
           {activeDoctor ? (
             <div className="bg-white border-2 border-blue-400 rounded-lg p-3 shadow-xl opacity-90">
-              <div className="font-semibold text-gray-900">{activeDoctor.name}</div>
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-blue-600" />
+                <div className="font-semibold text-gray-900">{activeDoctor.name}</div>
+              </div>
               {activeDoctor.position && (
                 <div className="text-xs text-gray-600 mt-1 font-medium">{activeDoctor.position}</div>
               )}

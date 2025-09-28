@@ -3,6 +3,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import { Doctor } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { User } from 'lucide-react'
 
 interface DraggableDoctorCardProps {
   doctor: Doctor
@@ -57,7 +58,10 @@ export function DraggableDoctorCard({ doctor, isAssignment = false }: DraggableD
   if (isAssignment) {
     return (
       <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 rounded-lg p-3 text-sm shadow-sm">
-        <div className="font-semibold text-blue-900">{doctor.name}</div>
+        <div className="flex items-center space-x-2">
+          <User className="h-4 w-4 text-blue-600" />
+          <div className="font-semibold text-blue-900">{doctor.name}</div>
+        </div>
         {doctor.position && (
           <div className="text-xs text-blue-700 mt-1 font-medium">{doctor.position}</div>
         )}
@@ -78,7 +82,10 @@ export function DraggableDoctorCard({ doctor, isAssignment = false }: DraggableD
       )}
     >
       <div className="flex items-center justify-between">
-        <div className="font-medium text-gray-900 text-sm">{doctor.name}</div>
+        <div className="flex items-center space-x-2">
+          <User className="h-3 w-3 text-gray-600" />
+          <div className="font-medium text-gray-900 text-sm">{doctor.name}</div>
+        </div>
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${getStatusColor(doctor.status)}`} title={getStatusText(doctor.status)}></div>
         </div>
