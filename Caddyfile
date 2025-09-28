@@ -1,0 +1,38 @@
+# Caddyfile for Duty Scheduler
+# This configuration provides automatic HTTPS with Let's Encrypt
+
+# For development with localhost
+localhost:8081 {
+    # Frontend (Next.js)
+    handle / {
+        reverse_proxy web:3000
+    }
+    
+    # API (FastAPI)
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+    
+    # Published schedules
+    handle /p/* {
+        reverse_proxy web:3000
+    }
+}
+
+# For production with a domain (uncomment and replace with your domain)
+# your-domain.com {
+#     # Frontend (Next.js)
+#     handle / {
+#         reverse_proxy web:3000
+#     }
+#     
+#     # API (FastAPI)
+#     handle /api/* {
+#         reverse_proxy api:8000
+#     }
+#     
+#     # Published schedules
+#     handle /p/* {
+#         reverse_proxy web:3000
+#     }
+# }
