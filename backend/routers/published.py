@@ -11,6 +11,59 @@ import json
 
 router = APIRouter()
 
+def validate_schedule_completeness(assignments: List[Assignment], week_dates: List[date]) -> None:
+    """Validate that schedule is complete before publishing"""
+    # Required assignment types for weekdays (Monday-Friday)
+    weekday_types = [
+        AssignmentType.ULTRASOUND_MORNING,
+        AssignmentType.ULTRASOUND_AFTERNOON,
+        AssignmentType.XRAY,
+        AssignmentType.CT_SCAN,
+        AssignmentType.MRI,
+        AssignmentType.DUTY
+    ]
+    
+    # Required assignment types for weekends (Saturday-Sunday) - only Duty
+    weekend_types = [AssignmentType.DUTY]
+    
+    # Group assignments by date
+    assignments_by_date = {}
+    for assignment in assignments:
+        assignment_date = assignment.assignment_date.date()
+        if assignment_date not in assignments_by_date:
+            assignments_by_date[assignment_date] = []
+        assignments_by_date[assignment_date].append(assignment.assignment_type)
+    
+    missing_assignments = []
+    
+    for i, date_obj in enumerate(week_dates):
+        # Convert datetime to date for comparison
+        date_only = date_obj.date() if hasattr(date_obj, 'date') else date_obj
+        weekday = date_only.weekday()  # 0=Monday, 6=Sunday
+        is_weekend = weekday >= 5  # Saturday=5, Sunday=6
+        
+        required_types = weekend_types if is_weekend else weekday_types
+        day_name = date_only.strftime('%A')
+        
+        if date_only not in assignments_by_date:
+            # No assignments for this day
+            missing_assignments.append(f"{day_name}: All required assignments missing")
+            continue
+        
+        assigned_types = assignments_by_date[date_only]
+        
+        # Check for missing assignment types
+        for required_type in required_types:
+            if required_type not in assigned_types:
+                missing_assignments.append(f"{day_name}: Missing {required_type.value.replace('_', ' ').title()}")
+    
+    if missing_assignments:
+        error_message = "Cannot publish incomplete schedule. Missing assignments:\n" + "\n".join(missing_assignments)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
+        )
+
 class PublishedScheduleResponse(BaseModel):
     id: int
     slug: str
