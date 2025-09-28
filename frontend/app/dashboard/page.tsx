@@ -529,6 +529,26 @@ export default function DashboardPage() {
                         <h2 className="text-lg font-semibold text-gray-900">
                           Weekly Schedule
                         </h2>
+                        
+                        {/* Approver and Preparer Boxes - Centered */}
+                        <div className="flex items-center space-x-4">
+                          <DroppableApproverPreparerBox
+                            id="prepared-by"
+                            title="Prepared by"
+                            assignedDoctor={preparedBy}
+                            onRemove={() => setPreparedBy(null)}
+                            userRole={user?.role}
+                          />
+                          
+                          <DroppableApproverPreparerBox
+                            id="approved-by"
+                            title="Approved by"
+                            assignedDoctor={approvedBy}
+                            onRemove={() => setApprovedBy(null)}
+                            userRole={user?.role}
+                          />
+                        </div>
+                        
                         {schedule?.id && user?.role !== 'viewer' && (
                           <PublishDialog 
                             scheduleId={schedule.id}
@@ -550,24 +570,6 @@ export default function DashboardPage() {
                         onWeekChange={handleWeekChange}
                       />
 
-                      {/* Approver and Preparer Boxes */}
-                      <div className="mt-4 flex justify-center space-x-6">
-                        <DroppableApproverPreparerBox
-                          id="prepared-by"
-                          title="Prepared by"
-                          assignedDoctor={preparedBy}
-                          onRemove={() => setPreparedBy(null)}
-                          userRole={user?.role}
-                        />
-                        
-                        <DroppableApproverPreparerBox
-                          id="approved-by"
-                          title="Approved by"
-                          assignedDoctor={approvedBy}
-                          onRemove={() => setApprovedBy(null)}
-                          userRole={user?.role}
-                        />
-                      </div>
                     </div>
                     
                     <div className="p-4">
