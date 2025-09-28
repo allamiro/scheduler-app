@@ -293,7 +293,7 @@ export default function DashboardPage() {
                   <h2 className="text-lg font-semibold text-gray-900">
                     Weekly Schedule
                   </h2>
-                  {schedule?.id && (
+                  {schedule?.id && user?.role !== 'viewer' && (
                     <PublishDialog 
                       scheduleId={schedule.id}
                       weekStart={currentWeek}
@@ -312,6 +312,7 @@ export default function DashboardPage() {
                   schedule={schedule}
                   doctors={doctors}
                   currentWeek={currentWeek}
+                  userRole={user?.role}
                   onAssignmentCreate={handleAssignmentCreate}
                   onAssignmentDelete={handleAssignmentDelete}
                 />

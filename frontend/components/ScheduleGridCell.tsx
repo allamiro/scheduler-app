@@ -11,6 +11,7 @@ interface ScheduleGridCellProps {
   assignmentType: AssignmentType
   assignments: Assignment[]
   doctors: Doctor[]
+  userRole?: string
   onAssignmentDelete: (assignmentId: number) => void
   onAssignmentCreate: (assignment: {
     doctor_id: number
@@ -24,6 +25,7 @@ export function ScheduleGridCell({
   assignmentType,
   assignments,
   doctors,
+  userRole,
   onAssignmentDelete,
   onAssignmentCreate
 }: ScheduleGridCellProps) {
@@ -40,6 +42,7 @@ export function ScheduleGridCell({
   )
 
   const handleDoubleClick = () => {
+    if (userRole === 'viewer') return // Disable for viewers
     if (!isAtCapacity && availableDoctors.length > 0) {
       setShowDoctorSelector(true)
     }
@@ -65,11 +68,15 @@ export function ScheduleGridCell({
       <TableCell 
         onDoubleClick={handleDoubleClick}
         className={`
-          min-h-[100px] min-w-[140px] p-2
-          ${isAtCapacity ? 'bg-red-50 cursor-not-allowed' : 'bg-white cursor-pointer hover:bg-blue-50'}
-          transition-colors duration-200 relative
+          min-h-[100px] min-w-[140px] p-3 relative
+          ${userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border-2 border-dashed border-gray-300' : 
+            isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border-2 border-red-200' : 
+            'bg-gradient-to-br from-white to-emerald-50 cursor-pointer hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 border-2 border-emerald-200 hover:border-blue-300'}
+          transition-all duration-300 ease-in-out rounded-lg shadow-sm hover:shadow-md
         `}
-        title={isAtCapacity ? 'At capacity' : availableDoctors.length === 0 ? 'No available doctors' : 'Double-click to assign doctor'}
+        title={userRole === 'viewer' ? 'Read-only view' : 
+               isAtCapacity ? 'At capacity' : 
+               availableDoctors.length === 0 ? 'No available doctors' : 'Double-click to assign doctor'}
       >
         <div className="space-y-2">
           {assignments.map(assignment => (
@@ -82,25 +89,29 @@ export function ScheduleGridCell({
                 }}
                 isAssignment
               />
-              <button
-                onClick={() => onAssignmentDelete(assignment.id)}
-                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                title="Remove assignment"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {userRole !== 'viewer' && (
+                <button
+                  onClick={() => onAssignmentDelete(assignment.id)}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                  title="Remove assignment"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
           ))}
           
-          {assignments.length === 0 && !isAtCapacity && (
-            <div className="text-xs text-gray-400 text-center py-4 flex flex-col items-center">
-              <Plus className="h-4 w-4 mb-1" />
-              Double-click to assign
+          {assignments.length === 0 && !isAtCapacity && userRole !== 'viewer' && (
+            <div className="text-xs text-emerald-600 text-center py-6 flex flex-col items-center">
+              <div className="bg-emerald-100 rounded-full p-2 mb-2">
+                <Plus className="h-4 w-4 text-emerald-600" />
+              </div>
+              <span className="font-medium">Double-click to assign</span>
             </div>
           )}
           
           {isAtCapacity && (
-            <div className="text-xs text-red-500 text-center mt-2">
+            <div className="text-xs text-red-600 text-center mt-2 bg-red-100 rounded-lg px-3 py-2 font-medium">
               At capacity ({assignments.length}/{assignmentTypeConfig?.capacity})
             </div>
           )}
