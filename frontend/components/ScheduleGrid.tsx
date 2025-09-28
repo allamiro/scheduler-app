@@ -45,6 +45,21 @@ export function ScheduleGrid({
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+      {/* Hospital and Department Header */}
+      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-6 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-wide">
+            JIGJIGA UNIVERSITY SHY-COMPREHENSIVE SPECIALIZED HOSPITAL
+          </h1>
+          <div className="text-lg md:text-xl font-semibold text-blue-100">
+            DEPARTMENT OF CLINICAL RADIOLOGY
+          </div>
+          <div className="text-base md:text-lg font-medium text-blue-200">
+            RADIOLOGISTS WORKING AND DUTY SCHEDULE
+          </div>
+        </div>
+      </div>
+      
       <Table>
         <TableHeader>
           <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 border-b-2 border-blue-200">

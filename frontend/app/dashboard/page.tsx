@@ -9,7 +9,7 @@ import { WeekNavigator } from '@/components/WeekNavigator'
 import { PublishDialog } from '@/components/PublishDialog'
 import { ChangePasswordDialog } from '@/components/ChangePasswordDialog'
 import { UserManagementDialog } from '@/components/UserManagementDialog'
-import { HolidayLegend } from '@/components/HolidayLegend'
+import { HolidaySidebar } from '@/components/HolidaySidebar'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
@@ -299,6 +299,12 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Holiday Sidebar */}
+          <HolidaySidebar 
+            weekStart={currentWeek}
+            weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
+          />
+          
           {/* Schedule Grid */}
           <div className="flex-1">
             <div className="bg-white rounded-lg shadow-sm border">
@@ -327,10 +333,6 @@ export default function DashboardPage() {
               </div>
               
               <div className="p-6">
-                <HolidayLegend 
-                  weekStart={currentWeek}
-                  weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
-                />
                 <ScheduleGrid
                   schedule={schedule}
                   doctors={doctors}
