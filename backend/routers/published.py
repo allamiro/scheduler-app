@@ -64,6 +64,10 @@ def validate_schedule_completeness(assignments: List[Assignment], week_dates: Li
             detail=error_message
         )
 
+class PublishScheduleRequest(BaseModel):
+    prepared_by: str = None
+    approved_by: str = None
+
 class PublishedScheduleResponse(BaseModel):
     id: int
     slug: str
@@ -82,7 +86,7 @@ class PublishedScheduleDetail(BaseModel):
     week_end_date: date
     assignments: Dict[str, List[Dict[str, Any]]]
 
-def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> str:
+def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str, prepared_by: str = None, approved_by: str = None) -> str:
     """Generate HTML for published schedule"""
     week_dates = schedule_data['week_dates']
     assignments = schedule_data['assignments']
@@ -96,6 +100,20 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> 
         AssignmentType.MRI: "MRI",
         AssignmentType.DUTY: "Duty"
     }
+    
+    # Generate approver/preparer section
+    approver_section = ""
+    if prepared_by or approved_by:
+        approver_section = f"""
+        <div class="approver-section" style="margin-bottom: 20px; text-align: center;">
+            <div style="display: inline-block; margin: 0 20px;">
+                <strong>Prepared by:</strong> {prepared_by or 'Not specified'}
+            </div>
+            <div style="display: inline-block; margin: 0 20px;">
+                <strong>Approved by:</strong> {approved_by or 'Not specified'}
+            </div>
+        </div>
+        """
     
     html = f"""
     <!DOCTYPE html>
@@ -115,6 +133,12 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> 
                 margin-bottom: 30px;
                 border-bottom: 2px solid #333;
                 padding-bottom: 20px;
+            }}
+            .approver-section {{
+                margin-bottom: 20px;
+                text-align: center;
+                font-size: 14px;
+                color: #333;
             }}
             .schedule-table {{
                 width: 100%;
@@ -163,6 +187,8 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> 
             <h1>Radiology Duty Schedule</h1>
             <h2>Week of {week_dates[0].strftime('%B %d, %Y')} - {week_dates[6].strftime('%B %d, %Y')}</h2>
         </div>
+        
+        {approver_section}
         
         <table class="schedule-table">
             <thead>
@@ -227,6 +253,7 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> 
 @router.post("/{schedule_id}/publish", response_model=PublishedScheduleResponse)
 async def publish_schedule(
     schedule_id: int,
+    request: PublishScheduleRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -272,7 +299,12 @@ async def publish_schedule(
     # Format the published date
     published_at_str = datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')
     
-    html_content = generate_schedule_html(schedule_data, published_at_str)
+    html_content = generate_schedule_html(
+        schedule_data, 
+        published_at_str, 
+        request.prepared_by, 
+        request.approved_by
+    )
     
     # Generate unique slug
     slug = str(uuid.uuid4())[:8]

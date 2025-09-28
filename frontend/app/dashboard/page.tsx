@@ -10,7 +10,7 @@ import { PublishDialog } from '@/components/PublishDialog'
 import { ChangePasswordDialog } from '@/components/ChangePasswordDialog'
 import { UserManagementDialog } from '@/components/UserManagementDialog'
 import { HolidaySidebar } from '@/components/HolidaySidebar'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection, useDroppable } from '@dnd-kit/core'
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
@@ -49,6 +49,72 @@ class DragDropLogger {
 
 const logger = new DragDropLogger()
 
+// Droppable Approver/Preparer Box Component
+function DroppableApproverPreparerBox({ 
+  id, 
+  title, 
+  assignedDoctor, 
+  onRemove,
+  userRole 
+}: { 
+  id: string
+  title: string
+  assignedDoctor: Doctor | null
+  onRemove: () => void
+  userRole?: string
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id,
+    disabled: userRole === 'viewer'
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative border-2 border-dashed rounded-lg p-3 min-w-[140px] transition-all duration-200 ${
+        isOver && userRole !== 'viewer' 
+          ? 'border-blue-400 bg-blue-50 scale-105' 
+          : 'border-gray-300 bg-gray-50'
+      } ${userRole === 'viewer' ? 'cursor-default' : 'cursor-pointer hover:border-gray-400'}`}
+    >
+      <div className="text-center">
+        <div className="text-xs font-semibold text-gray-700 mb-2">{title}</div>
+        <div className="min-h-[30px] flex items-center justify-center">
+          {assignedDoctor ? (
+            <div className="flex items-center space-x-2">
+              <div className="text-xs font-medium text-gray-900">{assignedDoctor.name}</div>
+              {userRole !== 'viewer' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemove()
+                  }}
+                  className="text-red-500 hover:text-red-700 text-xs"
+                  title="Remove"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500">
+              {userRole === 'viewer' ? 'Not assigned' : 'Drop doctor here'}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {isOver && userRole !== 'viewer' && (
+        <div className="absolute inset-0 bg-blue-200 bg-opacity-50 rounded flex items-center justify-center">
+          <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+            Drop here
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const [currentWeek, setCurrentWeek] = useState<Date>(getWeekStart(new Date()))
   const [schedule, setSchedule] = useState<Schedule | null>(null)
@@ -58,6 +124,8 @@ export default function DashboardPage() {
   const [showDebugPanel, setShowDebugPanel] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeDoctor, setActiveDoctor] = useState<Doctor | null>(null)
+  const [preparedBy, setPreparedBy] = useState<Doctor | null>(null) // Preparer assignment
+  const [approvedBy, setApprovedBy] = useState<Doctor | null>(null) // Approver assignment
   const router = useRouter()
 
   useEffect(() => {
@@ -198,6 +266,29 @@ export default function DashboardPage() {
     
     if (!over) {
       console.log('No drop target found')
+      return
+    }
+    
+    // Check if we're dropping on Approver/Preparer boxes
+    if ((over.id.toString() === 'prepared-by' || over.id.toString() === 'approved-by') && active.id.toString().startsWith('doctor-')) {
+      console.log('Dropping doctor on Approver/Preparer box')
+      
+      const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
+      const doctor = doctors.find(d => d.id === doctorId)
+      
+      if (!doctor) {
+        console.log('Doctor not found')
+        return
+      }
+      
+      if (over.id.toString() === 'prepared-by') {
+        setPreparedBy(doctor)
+        console.log('Set prepared by:', doctor.name)
+      } else if (over.id.toString() === 'approved-by') {
+        setApprovedBy(doctor)
+        console.log('Set approved by:', doctor.name)
+      }
+      
       return
     }
     
@@ -418,45 +509,79 @@ export default function DashboardPage() {
       >
         <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-4">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-            {/* Schedule Grid - Takes priority and most space */}
-            <div className="flex-1 min-w-0">
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="p-6 border-b">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Weekly Schedule
-                    </h2>
-                    {schedule?.id && user?.role !== 'viewer' && (
-                      <PublishDialog 
-                        scheduleId={schedule.id}
-                        weekStart={currentWeek}
-                        isPublished={schedule.is_published}
-                        onUnpublish={() => {
-                          // Reload schedule data after unpublishing
-                          loadData()
-                        }}
-                      />
-                    )}
+                {/* Schedule Grid - Takes priority and most space */}
+                <div className="flex-1 min-w-0">
+                  {/* Hospital and Department Header */}
+                  <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 text-center rounded-t-lg">
+                    <div className="space-y-1">
+                      <h1 className="text-lg md:text-xl font-bold tracking-wide">
+                        JIGJIGA UNIVERSITY SHY-COMPREHENSIVE SPECIALIZED HOSPITAL
+                      </h1>
+                      <div className="text-sm md:text-base font-semibold text-blue-100">
+                        DEPARTMENT OF CLINICAL RADIOLOGY
+                      </div>
+                    </div>
                   </div>
-                  
-                  <WeekNavigator 
-                    currentWeek={currentWeek}
-                    onWeekChange={handleWeekChange}
-                  />
+
+                  <div className="bg-white rounded-b-lg shadow-sm border border-t-0">
+                    <div className="p-6 border-b">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          Weekly Schedule
+                        </h2>
+                        {schedule?.id && user?.role !== 'viewer' && (
+                          <PublishDialog 
+                            scheduleId={schedule.id}
+                            weekStart={currentWeek}
+                            schedule={schedule}
+                            preparedBy={preparedBy}
+                            approvedBy={approvedBy}
+                            isPublished={schedule.is_published}
+                            onUnpublish={() => {
+                              // Reload schedule data after unpublishing
+                              loadData()
+                            }}
+                          />
+                        )}
+                      </div>
+                      
+                      <WeekNavigator 
+                        currentWeek={currentWeek}
+                        onWeekChange={handleWeekChange}
+                      />
+
+                      {/* Approver and Preparer Boxes */}
+                      <div className="mt-4 flex justify-center space-x-6">
+                        <DroppableApproverPreparerBox
+                          id="prepared-by"
+                          title="Prepared by"
+                          assignedDoctor={preparedBy}
+                          onRemove={() => setPreparedBy(null)}
+                          userRole={user?.role}
+                        />
+                        
+                        <DroppableApproverPreparerBox
+                          id="approved-by"
+                          title="Approved by"
+                          assignedDoctor={approvedBy}
+                          onRemove={() => setApprovedBy(null)}
+                          userRole={user?.role}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <ScheduleGridDnD
+                        schedule={schedule}
+                        doctors={doctors}
+                        currentWeek={currentWeek}
+                        userRole={user?.role}
+                        onAssignmentCreate={handleAssignmentCreate}
+                        onAssignmentDelete={handleAssignmentDelete}
+                      />
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="p-4">
-                  <ScheduleGridDnD
-                    schedule={schedule}
-                    doctors={doctors}
-                    currentWeek={currentWeek}
-                    userRole={user?.role}
-                    onAssignmentCreate={handleAssignmentCreate}
-                    onAssignmentDelete={handleAssignmentDelete}
-                  />
-                </div>
-              </div>
-            </div>
 
             {/* Right Sidebar - Doctors and Holidays stacked */}
             <div className="lg:w-80 xl:w-96 flex-shrink-0 space-y-4">

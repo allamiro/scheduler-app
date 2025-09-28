@@ -1,30 +1,90 @@
 'use client'
 
 import { useState } from 'react'
-import { PublishedSchedule } from '@/lib/types'
+import { PublishedSchedule, Schedule, AssignmentType, ASSIGNMENT_TYPES, Doctor } from '@/lib/types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { apiClient } from '@/lib/api'
-import { ExternalLink, Copy, Check } from 'lucide-react'
+import { ExternalLink, Copy, Check, AlertTriangle } from 'lucide-react'
 
 interface PublishDialogProps {
   scheduleId: number
   weekStart: Date
+  schedule?: Schedule | null
+  preparedBy?: Doctor | null
+  approvedBy?: Doctor | null
   isPublished?: boolean
   onUnpublish?: () => void
 }
 
-export function PublishDialog({ scheduleId, weekStart, isPublished = false, onUnpublish }: PublishDialogProps) {
+export function PublishDialog({ scheduleId, weekStart, schedule, preparedBy, approvedBy, isPublished = false, onUnpublish }: PublishDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [publishedSchedule, setPublishedSchedule] = useState<PublishedSchedule | null>(null)
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Validation function for weekend requirements
+  const validateSchedule = () => {
+    if (!schedule) return { isValid: false, message: 'No schedule data available' }
+
+    const weekDates: Date[] = []
+    const startOfWeek = new Date(weekStart)
+    startOfWeek.setDate(weekStart.getDate() - weekStart.getDay() + 1) // Start from Monday
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek)
+      date.setDate(startOfWeek.getDate() + i)
+      weekDates.push(date)
+    }
+
+    const missingAssignments: string[] = []
+
+    weekDates.forEach((date, index) => {
+      const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const dateStr = date.toISOString().split('T')[0]
+      
+      // For Friday (5), Saturday (6), Sunday (0) - only require Duty
+      if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
+        const dutyAssignments = schedule.assignments.filter(
+          a => a.assignment_date === dateStr && a.assignment_type === 'DUTY'
+        )
+        if (dutyAssignments.length === 0) {
+          const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
+          missingAssignments.push(`${dayName}: Duty assignment required`)
+        }
+      } else {
+        // For Monday-Thursday - require all assignment types
+        ASSIGNMENT_TYPES.forEach(assignmentType => {
+          const assignments = schedule.assignments.filter(
+            a => a.assignment_date === dateStr && a.assignment_type === assignmentType.type
+          )
+          if (assignments.length === 0) {
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
+            missingAssignments.push(`${dayName}: ${assignmentType.label} assignment required`)
+          }
+        })
+      }
+    })
+
+    return {
+      isValid: missingAssignments.length === 0,
+      message: missingAssignments.length === 0 
+        ? 'Schedule is ready to publish!' 
+        : `Missing assignments:\n${missingAssignments.join('\n')}`
+    }
+  }
+
+  const validation = validateSchedule()
+
   const handlePublish = async () => {
     setLoading(true)
     try {
-      const result = await apiClient.publishSchedule(scheduleId)
+      const result = await apiClient.publishSchedule(
+        scheduleId, 
+        preparedBy?.name, 
+        approvedBy?.name
+      )
       setPublishedSchedule(result)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to publish schedule')
@@ -102,6 +162,33 @@ export function PublishDialog({ scheduleId, weekStart, isPublished = false, onUn
               {isPublished ? "Unpublishing" : "Publishing"} schedule for: <strong>{formatWeekRange(weekStart)}</strong>
             </div>
             
+            {/* Validation Status */}
+            {!isPublished && (
+              <div className={`p-3 rounded-md border ${
+                validation.isValid 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-yellow-50 border-yellow-200'
+              }`}>
+                <div className={`flex items-center space-x-2 ${
+                  validation.isValid ? 'text-green-800' : 'text-yellow-800'
+                }`}>
+                  {validation.isValid ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {validation.isValid ? 'Ready to Publish' : 'Validation Required'}
+                  </span>
+                </div>
+                <div className={`text-xs mt-1 ${
+                  validation.isValid ? 'text-green-600' : 'text-yellow-600'
+                }`}>
+                  {validation.message}
+                </div>
+              </div>
+            )}
+            
             <div className="text-sm text-gray-600">
               {isPublished 
                 ? "This will remove all published versions and allow editing of the schedule."
@@ -166,7 +253,11 @@ export function PublishDialog({ scheduleId, weekStart, isPublished = false, onUn
                 <span>View Published</span>
               </Button>
             ) : (
-              <Button onClick={handlePublish} disabled={loading}>
+              <Button 
+                onClick={handlePublish} 
+                disabled={loading || !validation.isValid}
+                className={!validation.isValid ? 'opacity-50 cursor-not-allowed' : ''}
+              >
                 {loading ? 'Publishing...' : 'Publish'}
               </Button>
             )}

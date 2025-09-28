@@ -173,9 +173,13 @@ class ApiClient {
   }
 
   // Published schedule endpoints
-  async publishSchedule(scheduleId: number): Promise<PublishedSchedule> {
+  async publishSchedule(scheduleId: number, preparedBy?: string, approvedBy?: string): Promise<PublishedSchedule> {
     return this.request<PublishedSchedule>(`/api/published/${scheduleId}/publish`, {
       method: 'POST',
+      body: JSON.stringify({
+        prepared_by: preparedBy,
+        approved_by: approvedBy
+      }),
     })
   }
 

@@ -46,17 +46,6 @@ export function ScheduleGridDnD({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-      {/* Hospital and Department Header - More Compact */}
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-3 text-center">
-        <div className="space-y-1">
-          <h1 className="text-lg md:text-xl font-bold tracking-wide">
-            JIGJIGA UNIVERSITY SHY-COMPREHENSIVE SPECIALIZED HOSPITAL
-          </h1>
-          <div className="text-sm md:text-base font-semibold text-blue-100">
-            DEPARTMENT OF CLINICAL RADIOLOGY
-          </div>
-        </div>
-      </div>
       
       <div className="overflow-x-auto">
         <Table className="w-full">
