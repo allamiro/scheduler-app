@@ -53,12 +53,11 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
   }
 
   return (
-    <div className="w-80 flex-shrink-0">
-      <Card className="h-fit border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50">
-        <CardHeader className="pb-3">
+    <Card className="h-fit border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center space-x-2 text-amber-800">
-            <Calendar className="h-5 w-5" />
-            <span className="text-lg font-semibold">Holidays This Week</span>
+            <Calendar className="h-4 w-4" />
+            <span className="text-base font-semibold">Holidays</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -68,21 +67,21 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
               <p className="text-sm text-gray-600">No holidays this week</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {weekHolidays.map((holiday, index) => (
-                <div key={index} className="bg-white rounded-lg p-3 border border-amber-200 shadow-sm">
-                  <div className="flex items-start justify-between mb-2">
+                <div key={index} className="bg-white rounded p-2 border border-amber-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-1">
                     <Badge 
                       variant="outline" 
                       className={`${getHolidayTypeColor(holiday.type)} font-medium text-xs`}
                     >
-                      {holiday.type}
+                      {holiday.type.charAt(0).toUpperCase()}
                     </Badge>
                     <span className="text-xs text-gray-500 font-medium">
                       {formatHolidayDate(holiday.date)}
                     </span>
                   </div>
-                  <h4 className="font-semibold text-gray-900 text-sm leading-tight">
+                  <h4 className="font-semibold text-gray-900 text-xs leading-tight">
                     {holiday.name}
                   </h4>
                 </div>
@@ -109,6 +108,5 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
           </div>
         </CardContent>
       </Card>
-    </div>
   )
 }

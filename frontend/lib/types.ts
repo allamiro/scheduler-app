@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'editor' | 'viewer'
+export type DoctorStatus = 'ACTIVE' | 'ON_LEAVE' | 'INACTIVE'
 
 export interface User {
   id: number
@@ -38,6 +39,7 @@ export interface Doctor {
   phone?: string
   position?: string
   is_active: boolean
+  status: DoctorStatus
 }
 
 export interface Assignment {

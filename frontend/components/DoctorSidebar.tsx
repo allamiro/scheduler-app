@@ -70,34 +70,34 @@ export function DoctorSidebar({ doctors, onDoctorUpdate, userRole }: DoctorSideb
 
   return (
     <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6 border-b">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Doctors</h3>
+      <div className="p-3 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-900">Doctors</h3>
           {userRole !== 'viewer' && (
             <Button
               size="sm"
               onClick={() => setShowAddDialog(true)}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-1"
             >
-              <Plus className="h-4 w-4" />
-              <span>Add Doctor</span>
+              <Plus className="h-3 w-3" />
+              <span className="text-xs">Add</span>
             </Button>
           )}
         </div>
         
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
           <Input
-            placeholder="Search doctors..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-8 text-sm h-8"
           />
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="space-y-3">
+      <div className="p-3">
+        <div className="space-y-2">
           {filteredDoctors.map(doctor => (
             <div key={doctor.id} className="relative group">
               <DoctorCard doctor={doctor} />

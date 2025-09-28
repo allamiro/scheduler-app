@@ -11,6 +11,31 @@ interface DoctorCardProps {
 }
 
 export function DoctorCard({ doctor, isDragging = false, isAssignment = false }: DoctorCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-green-500'
+      case 'ON_LEAVE':
+        return 'bg-yellow-500'
+      case 'INACTIVE':
+        return 'bg-red-500'
+      default:
+        return 'bg-gray-500'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Active'
+      case 'ON_LEAVE':
+        return 'On Leave'
+      case 'INACTIVE':
+        return 'Inactive'
+      default:
+        return 'Unknown'
+    }
+  }
   const { attributes, listeners, setNodeRef, transform, isDragging: isDraggingContext } = useDraggable({
     id: doctor.id.toString(),
     disabled: isAssignment,
@@ -31,28 +56,33 @@ export function DoctorCard({ doctor, isDragging = false, isAssignment = false }:
     )
   }
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={cn(
-        "bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-300 hover:border-blue-300 hover:from-blue-50 hover:to-white",
-        (isDragging || isDraggingContext) && "opacity-50 shadow-xl scale-105",
-        "select-none"
-      )}
-    >
-      <div className="font-semibold text-gray-900">{doctor.name}</div>
-      {doctor.position && (
-        <div className="text-xs text-gray-600 mt-1 font-medium bg-gray-100 rounded-md px-2 py-1">{doctor.position}</div>
-      )}
-      {doctor.email && (
-        <div className="text-xs text-gray-500 mt-1">{doctor.email}</div>
-      )}
-      {doctor.phone && (
-        <div className="text-xs text-gray-500">{doctor.phone}</div>
-      )}
-    </div>
-  )
+      return (
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...listeners}
+          {...attributes}
+          className={cn(
+            "bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-2 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all duration-300 hover:border-blue-300 hover:from-blue-50 hover:to-white",
+            (isDragging || isDraggingContext) && "opacity-50 shadow-xl scale-105",
+            "select-none"
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div className="font-medium text-gray-900 text-sm">{doctor.name}</div>
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${getStatusColor(doctor.status)}`} title={getStatusText(doctor.status)}></div>
+            </div>
+          </div>
+          {doctor.position && (
+            <div className="text-xs text-gray-600 mt-1 font-medium bg-gray-100 rounded px-1 py-0.5">{doctor.position}</div>
+          )}
+          {doctor.email && (
+            <div className="text-xs text-gray-500 mt-1">{doctor.email}</div>
+          )}
+          {doctor.phone && (
+            <div className="text-xs text-gray-500">{doctor.phone}</div>
+          )}
+        </div>
+      )
 }

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Doctor } from '@/lib/types'
+import { Doctor, DoctorStatus } from '@/lib/types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { apiClient } from '@/lib/api'
 
 interface AddDoctorDialogProps {
@@ -19,6 +20,7 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
     email: doctor?.email || '',
     phone: doctor?.phone || '',
     position: doctor?.position || '',
+    status: doctor?.status || 'ACTIVE' as DoctorStatus,
   })
   const [loading, setLoading] = useState(false)
 
@@ -107,6 +109,25 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
               onChange={(e) => setFormData({ ...formData, position: e.target.value })}
               placeholder="Enter position/title"
             />
+          </div>
+          
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value) => setFormData({ ...formData, status: value as DoctorStatus })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">🟢 Active</SelectItem>
+                <SelectItem value="ON_LEAVE">🟡 On Leave</SelectItem>
+                <SelectItem value="INACTIVE">🔴 Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <DialogFooter>

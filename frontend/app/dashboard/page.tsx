@@ -297,16 +297,18 @@ export default function DashboardPage() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Holiday Sidebar */}
-          <HolidaySidebar 
-            weekStart={currentWeek}
-            weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
-          />
+      <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-4">
+        <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
+          {/* Holiday Sidebar - Smaller and responsive */}
+          <div className="xl:w-64 2xl:w-72 flex-shrink-0 order-2 xl:order-1">
+            <HolidaySidebar 
+              weekStart={currentWeek}
+              weekEnd={new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000)}
+            />
+          </div>
           
-          {/* Schedule Grid */}
-          <div className="flex-1">
+          {/* Schedule Grid - Takes priority */}
+          <div className="flex-1 min-w-0 order-1 xl:order-2">
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex justify-between items-center mb-4">
@@ -345,8 +347,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Doctor Sidebar */}
-          <div className="lg:w-80 flex-shrink-0">
+          {/* Doctor Sidebar - Smaller and responsive */}
+          <div className="xl:w-64 2xl:w-72 flex-shrink-0 order-3">
             <DoctorSidebar 
               doctors={doctors}
               onDoctorUpdate={loadData}

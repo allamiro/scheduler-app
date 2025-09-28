@@ -60,22 +60,23 @@ export function ScheduleGrid({
         </div>
       </div>
       
-      <Table>
+      <div className="overflow-x-auto">
+        <Table className="w-full">
         <TableHeader>
           <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 border-b-2 border-blue-200">
-            <TableHead className="w-[120px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2">
+            <TableHead className="w-[140px] lg:w-[160px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2">
               <div className="flex flex-col items-center space-y-1">
                 <div className="text-blue-700 font-semibold">Date</div>
                 <div className="text-xs text-blue-600 font-medium">(EC)</div>
               </div>
             </TableHead>
-            <TableHead className="w-[100px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2">
+            <TableHead className="w-[100px] lg:w-[120px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2">
               <div className="text-purple-700 font-semibold">Day</div>
             </TableHead>
             {ASSIGNMENT_TYPES.map(type => (
               <TableHead 
                 key={type.type} 
-                className="min-w-[140px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2"
+                className="min-w-[160px] lg:min-w-[180px] text-center font-bold text-gray-800 text-sm md:text-base py-4 px-2"
               >
                 <div className="space-y-1">
                   <div className="text-emerald-700 font-semibold">{type.label}</div>
@@ -117,6 +118,7 @@ export function ScheduleGrid({
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

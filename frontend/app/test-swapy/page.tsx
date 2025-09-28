@@ -7,10 +7,10 @@ import { apiClient } from '@/lib/api'
 
 // Simple test doctors
 const testDoctors: Doctor[] = [
-  { id: 1, name: 'Dr. Test 1', email: 'test1@test.com', is_active: true },
-  { id: 2, name: 'Dr. Test 2', email: 'test2@test.com', is_active: true },
-  { id: 3, name: 'Dr. Test 3', email: 'test3@test.com', is_active: true },
-  { id: 4, name: 'Dr. Test 4', email: 'test4@test.com', is_active: true }
+  { id: 1, name: 'Dr. Test 1', email: 'test1@test.com', is_active: true, status: 'ACTIVE' },
+  { id: 2, name: 'Dr. Test 2', email: 'test2@test.com', is_active: true, status: 'ON_LEAVE' },
+  { id: 3, name: 'Dr. Test 3', email: 'test3@test.com', is_active: true, status: 'INACTIVE' },
+  { id: 4, name: 'Dr. Test 4', email: 'test4@test.com', is_active: true, status: 'ACTIVE' }
 ]
 
 function DoctorCard({ doctor }: { doctor: Doctor }) {

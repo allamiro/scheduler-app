@@ -85,7 +85,8 @@ export function ScheduleGridCell({
                 doctor={{
                   id: assignment.doctor_id,
                   name: assignment.doctor_name,
-                  is_active: true
+                  is_active: true,
+                  status: 'ACTIVE' as const
                 }}
                 isAssignment
               />

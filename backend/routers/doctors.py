@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
-from models import Doctor, Assignment
+from models import Doctor, Assignment, DoctorStatus
 from auth import get_current_user
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
@@ -14,6 +14,7 @@ class DoctorCreate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     position: Optional[str] = None
+    status: DoctorStatus = DoctorStatus.ACTIVE
     
     @field_validator('email')
     @classmethod
@@ -48,6 +49,7 @@ class DoctorUpdate(BaseModel):
     phone: Optional[str] = None
     position: Optional[str] = None
     is_active: Optional[bool] = None
+    status: Optional[DoctorStatus] = None
     
     @field_validator('email')
     @classmethod
@@ -83,6 +85,7 @@ class DoctorResponse(BaseModel):
     phone: Optional[str]
     position: Optional[str]
     is_active: bool
+    status: DoctorStatus
 
     class Config:
         from_attributes = True
@@ -171,6 +174,9 @@ async def update_doctor(
     
     if doctor_data.is_active is not None:
         doctor.is_active = doctor_data.is_active
+    
+    if doctor_data.status is not None:
+        doctor.status = doctor_data.status
     
     db.commit()
     db.refresh(doctor)

@@ -10,6 +10,11 @@ class UserRole(str, enum.Enum):
     EDITOR = "editor"
     VIEWER = "viewer"
 
+class DoctorStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    ON_LEAVE = "ON_LEAVE"
+    INACTIVE = "INACTIVE"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -31,6 +36,7 @@ class Doctor(Base):
     phone = Column(String, nullable=True)  # Made optional
     position = Column(String, nullable=True)  # Added position field
     is_active = Column(Boolean, default=True)
+    status = Column(Enum(DoctorStatus), default=DoctorStatus.ACTIVE)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
