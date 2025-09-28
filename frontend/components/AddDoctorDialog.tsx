@@ -36,7 +36,11 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
       }
       onSuccess()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to save doctor')
+      console.error('Doctor save error:', error)
+      const errorMessage = error instanceof Error ? error.message : 
+        typeof error === 'object' ? JSON.stringify(error) : 
+        String(error)
+      alert(`Failed to save doctor: ${errorMessage}`)
     } finally {
       setLoading(false)
     }

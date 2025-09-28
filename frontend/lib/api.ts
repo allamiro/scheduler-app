@@ -60,7 +60,22 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
-      throw new Error(error.detail || `HTTP ${response.status}`)
+      
+      // Handle different error formats
+      let errorMessage = `HTTP ${response.status}`
+      
+      if (error.detail) {
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail
+        } else if (Array.isArray(error.detail)) {
+          // Handle validation errors
+          errorMessage = error.detail.map((err: any) => err.msg || err.message || 'Validation error').join(', ')
+        } else if (typeof error.detail === 'object') {
+          errorMessage = error.detail.message || JSON.stringify(error.detail)
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
