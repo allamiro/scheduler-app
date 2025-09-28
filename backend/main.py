@@ -72,13 +72,6 @@ async def health_check():
             detail=f"Service unhealthy: {str(e)}"
         )
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(doctors.router, prefix="/api/doctors", tags=["doctors"])
-app.include_router(schedules.router, prefix="/api/schedules", tags=["schedules"])
-app.include_router(published.router, prefix="/api/published", tags=["published"])
-
 @app.get("/")
 async def root():
     return {"message": "Duty Scheduler API", "version": "1.0.0"}

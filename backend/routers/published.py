@@ -29,7 +29,7 @@ class PublishedScheduleDetail(BaseModel):
     week_end_date: date
     assignments: Dict[str, List[Dict[str, Any]]]
 
-def generate_schedule_html(schedule_data: Dict[str, Any]) -> str:
+def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> str:
     """Generate HTML for published schedule"""
     week_dates = schedule_data['week_dates']
     assignments = schedule_data['assignments']
@@ -38,8 +38,7 @@ def generate_schedule_html(schedule_data: Dict[str, Any]) -> str:
     assignment_labels = {
         AssignmentType.ULTRASOUND_MORNING: "ULTRASOUND Morning",
         AssignmentType.ULTRASOUND_AFTERNOON: "ULTRASOUND Afternoon",
-        AssignmentType.XRAY_MORNING: "X ray Morning",
-        AssignmentType.XRAY_AFTERNOON: "X ray Afternoon",
+        AssignmentType.XRAY: "X ray",
         AssignmentType.CT_SCAN: "CT-SCAN",
         AssignmentType.MRI: "MRI",
         AssignmentType.DUTY: "Duty"
@@ -119,8 +118,7 @@ def generate_schedule_html(schedule_data: Dict[str, Any]) -> str:
                     <th>Day</th>
                     <th>ULTRASOUND Morning</th>
                     <th>ULTRASOUND Afternoon</th>
-                    <th>X ray Morning</th>
-                    <th>X ray Afternoon</th>
+                    <th>X ray</th>
                     <th>CT-SCAN</th>
                     <th>MRI</th>
                     <th>Duty</th>
@@ -139,7 +137,16 @@ def generate_schedule_html(schedule_data: Dict[str, Any]) -> str:
         """
         
         # Generate cells for each assignment type
-        for assignment_type in AssignmentType:
+        assignment_types = [
+            AssignmentType.ULTRASOUND_MORNING,
+            AssignmentType.ULTRASOUND_AFTERNOON,
+            AssignmentType.XRAY,
+            AssignmentType.CT_SCAN,
+            AssignmentType.MRI,
+            AssignmentType.DUTY
+        ]
+        
+        for assignment_type in assignment_types:
             cell_key = f"{date_obj.isoformat()}_{assignment_type.value}"
             doctors = assignments.get(cell_key, [])
             
