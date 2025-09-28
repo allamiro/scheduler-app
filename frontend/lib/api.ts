@@ -115,6 +115,12 @@ class ApiClient {
     })
   }
 
+  async clearDoctorAssignments(id: number): Promise<{ message: string; cleared_count: number }> {
+    return this.request<{ message: string; cleared_count: number }>(`/api/doctors/${id}/assignments`, {
+      method: 'DELETE',
+    })
+  }
+
   // Schedule endpoints
   async getSchedules(): Promise<Schedule[]> {
     return this.request<Schedule[]>('/api/schedules/')

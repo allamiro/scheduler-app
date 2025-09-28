@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import get_db
-from models import Doctor
+from models import Doctor, Assignment
 from auth import get_current_user
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -132,6 +133,76 @@ async def delete_doctor(
             detail="Doctor not found"
         )
     
-    db.delete(doctor)
+    # Check if doctor has any assignments
+    assignments = db.query(Assignment).filter(Assignment.doctor_id == doctor_id).all()
+    if assignments:
+        # Get detailed assignment information
+        from sqlalchemy import text
+        assignment_details = db.execute(text("""
+            SELECT 
+                a.id as assignment_id,
+                a.assignment_date,
+                a.assignment_type,
+                s.id as schedule_id,
+                TO_CHAR(s.week_start_date, 'Mon DD, YYYY') || ' - ' || TO_CHAR(s.week_end_date, 'Mon DD, YYYY') as week_range
+            FROM assignments a
+            JOIN schedules s ON a.schedule_id = s.id
+            WHERE a.doctor_id = :doctor_id
+            ORDER BY s.week_start_date
+        """), {"doctor_id": doctor_id}).fetchall()
+        
+        # Format assignment details
+        assignment_list = []
+        for detail in assignment_details:
+            assignment_list.append(f"• {detail.week_range} ({detail.assignment_type.replace('_', ' ').title()})")
+        
+        assignments_text = "\n".join(assignment_list)
+        
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete doctor '{doctor.name}' because they have {len(assignments)} assignment(s):\n\n{assignments_text}\n\nPlease remove these assignments first or deactivate the doctor instead."
+        )
+    
+    try:
+        db.delete(doctor)
+        db.commit()
+        return {"message": "Doctor deleted successfully"}
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete doctor '{doctor.name}' because they are referenced by other records. Please remove all assignments first."
+        )
+
+@router.delete("/{doctor_id}/assignments")
+async def clear_doctor_assignments(
+    doctor_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Clear all assignments for a specific doctor"""
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+    
+    # Get assignments count before deletion
+    assignments = db.query(Assignment).filter(Assignment.doctor_id == doctor_id).all()
+    assignment_count = len(assignments)
+    
+    if assignment_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Doctor '{doctor.name}' has no assignments to clear."
+        )
+    
+    # Delete all assignments for this doctor
+    db.query(Assignment).filter(Assignment.doctor_id == doctor_id).delete()
     db.commit()
-    return {"message": "Doctor deleted successfully"}
+    
+    return {
+        "message": f"Successfully cleared {assignment_count} assignment(s) for doctor '{doctor.name}'",
+        "cleared_count": assignment_count
+    }

@@ -31,7 +31,30 @@ export function DoctorSidebar({ doctors, onDoctorUpdate, userRole }: DoctorSideb
         await apiClient.deleteDoctor(doctorId)
         onDoctorUpdate()
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to delete doctor')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete doctor'
+        
+        // Check if the error mentions assignments
+        if (errorMessage.includes('assignment(s)')) {
+          const shouldClearAssignments = confirm(
+            `${errorMessage}\n\nWould you like to clear all assignments for this doctor and then delete them?`
+          )
+          
+          if (shouldClearAssignments) {
+            try {
+              const result = await apiClient.clearDoctorAssignments(doctorId)
+              alert(result.message)
+              
+              // Try to delete the doctor again
+              await apiClient.deleteDoctor(doctorId)
+              alert('Doctor deleted successfully!')
+              onDoctorUpdate()
+            } catch (clearError) {
+              alert(`Failed to clear assignments: ${clearError instanceof Error ? clearError.message : 'Unknown error'}`)
+            }
+          }
+        } else {
+          alert(errorMessage)
+        }
       }
     }
   }

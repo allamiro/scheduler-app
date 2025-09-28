@@ -157,7 +157,7 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str) -> 
         
         html += '</tr>'
     
-    html += """
+    html += f"""
             </tbody>
         </table>
         
@@ -212,7 +212,11 @@ async def publish_schedule(
         'week_dates': week_dates,
         'assignments': assignments_dict
     }
-    html_content = generate_schedule_html(schedule_data)
+    
+    # Format the published date
+    published_at_str = datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')
+    
+    html_content = generate_schedule_html(schedule_data, published_at_str)
     
     # Generate unique slug
     slug = str(uuid.uuid4())[:8]
