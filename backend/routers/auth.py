@@ -12,6 +12,20 @@ from utils.auth import get_user_by_username, normalize_username
 
 router = APIRouter()
 
+
+_DEFAULT_ADMIN_USERNAME = normalize_username(settings.DEFAULT_ADMIN_USERNAME)
+
+
+def _sync_default_admin_if_applicable(db: Session, normalized_username: str) -> None:
+    """Ensure the default administrator exists when the matching username attempts to sign in."""
+
+    if (
+        settings.DEFAULT_ADMIN_ENSURE_CREDENTIALS
+        and _DEFAULT_ADMIN_USERNAME
+        and normalized_username.lower() == _DEFAULT_ADMIN_USERNAME.lower()
+    ):
+        ensure_default_admin(db)
+
 class Token(BaseModel):
     access_token: str
     token_type: str
