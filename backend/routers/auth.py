@@ -7,8 +7,24 @@ from models import User, UserRole
 from auth import verify_password, create_access_token, get_current_user, get_password_hash
 from config import settings
 from pydantic import BaseModel
+from utils.auth import get_user_by_username, normalize_username
+from bootstrap import ensure_default_admin
 
 router = APIRouter()
+
+
+_DEFAULT_ADMIN_USERNAME = normalize_username(settings.DEFAULT_ADMIN_USERNAME)
+
+
+def _sync_default_admin_if_applicable(db: Session, normalized_username: str) -> None:
+    """Ensure the default administrator exists when the matching username attempts to sign in."""
+
+    if (
+        settings.DEFAULT_ADMIN_ENSURE_CREDENTIALS
+        and _DEFAULT_ADMIN_USERNAME
+        and normalized_username.lower() == _DEFAULT_ADMIN_USERNAME.lower()
+    ):
+        ensure_default_admin(db)
 
 class Token(BaseModel):
     access_token: str
@@ -32,12 +48,21 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == form_data.username).first()
+    normalized_username = normalize_username(form_data.username)
+    if not normalized_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username is required",
+        )
+
+    _sync_default_admin_if_applicable(db, normalized_username)
+    user = get_user_by_username(db, normalized_username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,7 +81,15 @@ async def login_json(
     login_data: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == login_data.username).first()
+    normalized_username = normalize_username(login_data.username)
+    if not normalized_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username is required",
+        )
+
+    _sync_default_admin_if_applicable(db, normalized_username)
+    user = get_user_by_username(db, normalized_username)
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
