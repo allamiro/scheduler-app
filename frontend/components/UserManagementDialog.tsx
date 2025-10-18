@@ -237,7 +237,11 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 rounded-full border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+        >
           <Users className="h-4 w-4" />
           <span>Manage Users</span>
         </Button>

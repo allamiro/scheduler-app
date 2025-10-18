@@ -75,34 +75,34 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-3 border-b">
+    <div className="rounded-2xl border border-white/20 bg-white/95 shadow-[0_25px_80px_-40px_rgba(30,64,175,0.35)] backdrop-blur">
+      <div className="p-4 border-b border-slate-200/70">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-gray-900">Doctors</h3>
+          <h3 className="text-base font-semibold text-slate-900">Doctors</h3>
           {userRole !== 'viewer' && (
             <Button
               size="sm"
               onClick={() => setShowAddDialog(true)}
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 rounded-full"
             >
               <Plus className="h-3 w-3" />
               <span className="text-xs">Add</span>
             </Button>
           )}
         </div>
-        
+
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
           <Input
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 text-sm h-8"
+            className="h-10 rounded-full border-slate-200/60 bg-white/80 pl-9 text-sm focus-visible:ring-indigo-300"
           />
         </div>
       </div>
 
-      <div className="p-3">
+      <div className="p-4">
         <div className="space-y-2">
           {filteredDoctors.map(doctor => (
             <div key={doctor.id} className="relative group">
@@ -132,7 +132,7 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
         </div>
         
         {filteredDoctors.length === 0 && (
-          <div className="text-center text-gray-500 py-4">
+          <div className="py-4 text-center text-slate-500">
             {searchTerm ? 'No doctors found matching your search.' : 'No doctors available.'}
           </div>
         )}
