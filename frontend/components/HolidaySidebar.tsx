@@ -47,13 +47,13 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
   const getHolidayTypeColor = (type: Holiday['type']) => {
     switch (type) {
       case 'national':
-        return 'bg-red-100 text-red-800 border-red-200'
+        return 'border-rose-300/60 bg-rose-400/30 text-rose-50'
       case 'religious':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return 'border-sky-300/60 bg-sky-400/30 text-sky-50'
       case 'cultural':
-        return 'bg-green-100 text-green-800 border-green-200'
+        return 'border-emerald-300/60 bg-emerald-400/30 text-emerald-50'
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+        return 'border-white/30 bg-white/20 text-white'
     }
   }
 
@@ -67,60 +67,60 @@ export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {
   }
 
   return (
-    <Card className="h-fit border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center space-x-2 text-amber-800">
-            <Calendar className="h-4 w-4" />
-            <span className="text-base font-semibold">Holidays</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {weekHolidays.length === 0 ? (
-            <div className="text-center py-6">
-              <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">No holidays this week</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {weekHolidays.map((holiday, index) => (
-                <div key={index} className="bg-white rounded p-2 border border-amber-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-1">
-                    <Badge 
-                      variant="outline" 
-                      className={`${getHolidayTypeColor(holiday.type)} font-medium text-xs`}
-                    >
-                      {holiday.type.charAt(0).toUpperCase()}
-                    </Badge>
-                    <span className="text-xs text-gray-500 font-medium">
-                      {formatHolidayDate(holiday.date)}
-                    </span>
-                  </div>
-                  <h4 className="font-semibold text-gray-900 text-xs leading-tight">
-                    {holiday.name}
-                  </h4>
+    <Card className="h-fit rounded-2xl border border-white/20 bg-white/10 text-white shadow-[0_25px_80px_-40px_rgba(30,64,175,0.35)] backdrop-blur">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center space-x-2 text-white">
+          <Calendar className="h-4 w-4 text-indigo-100" />
+          <span className="text-base font-semibold">Holidays</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {weekHolidays.length === 0 ? (
+          <div className="py-6 text-center">
+            <Clock className="mx-auto mb-2 h-8 w-8 text-indigo-200" />
+            <p className="text-sm text-indigo-100/80">No holidays this week</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {weekHolidays.map((holiday, index) => (
+              <div key={index} className="rounded-2xl border border-white/15 bg-white/10 p-3">
+                <div className="mb-1 flex items-center justify-between">
+                  <Badge
+                    variant="outline"
+                    className={`${getHolidayTypeColor(holiday.type)} font-medium text-xs`}
+                  >
+                    {holiday.type.charAt(0).toUpperCase()}
+                  </Badge>
+                  <span className="text-xs font-medium text-indigo-100/80">
+                    {formatHolidayDate(holiday.date)}
+                  </span>
                 </div>
-              ))}
+                <h4 className="text-xs font-semibold leading-tight text-white">
+                  {holiday.name}
+                </h4>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5 border-t border-white/10 pt-4">
+          <div className="mb-2 text-xs font-medium uppercase tracking-widest text-indigo-100/70">Legend</div>
+          <div className="space-y-1 text-xs text-indigo-100/80">
+            <div className="flex items-center space-x-2">
+              <div className="h-3 w-3 rounded border border-rose-200/60 bg-rose-300/40"></div>
+              <span>National</span>
             </div>
-          )}
-          
-          <div className="mt-4 pt-3 border-t border-amber-200">
-            <div className="text-xs text-gray-600 font-medium mb-2">Legend:</div>
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2 text-xs">
-                <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-                <span className="text-gray-600">National</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded"></div>
-                <span className="text-gray-600">Religious</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
-                <span className="text-gray-600">Cultural</span>
-              </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-3 w-3 rounded border border-sky-200/60 bg-sky-300/40"></div>
+              <span>Religious</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-3 w-3 rounded border border-emerald-200/60 bg-emerald-300/40"></div>
+              <span>Cultural</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

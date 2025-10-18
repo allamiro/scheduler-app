@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 from models import Base, User, Doctor, Capacity, AssignmentType, UserRole
 from auth import get_password_hash
+from bootstrap import ensure_default_admin
+from utils.auth import normalize_username, get_user_by_username
 from datetime import datetime
 
 def create_default_capacities(db: Session):
@@ -34,35 +36,27 @@ def create_default_capacities(db: Session):
 
 def create_default_users(db: Session):
     """Create default admin, editor, and viewer users"""
-    # Admin user
-    admin_user = db.query(User).filter(User.username == "admin").first()
-    if not admin_user:
-        admin_user = User(
-            username="admin",
-            email="admin@scheduler.com",
-            hashed_password=get_password_hash("admin"),
-            role=UserRole.ADMIN,
-            is_active=True
-        )
-        db.add(admin_user)
-    
+    ensure_default_admin(db)
+
     # Editor user
-    editor_user = db.query(User).filter(User.username == "editor").first()
+    editor_username = normalize_username("editor")
+    editor_user = get_user_by_username(db, editor_username)
     if not editor_user:
         editor_user = User(
-            username="editor",
+            username=editor_username,
             email="editor@scheduler.com",
             hashed_password=get_password_hash("editor"),
             role=UserRole.EDITOR,
             is_active=True
         )
         db.add(editor_user)
-    
+
     # Viewer user
-    viewer_user = db.query(User).filter(User.username == "viewer").first()
+    viewer_username = normalize_username("viewer")
+    viewer_user = get_user_by_username(db, viewer_username)
     if not viewer_user:
         viewer_user = User(
-            username="viewer",
+            username=viewer_username,
             email="viewer@scheduler.com",
             hashed_password=get_password_hash("viewer"),
             role=UserRole.VIEWER,
