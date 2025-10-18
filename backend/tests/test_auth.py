@@ -72,6 +72,20 @@ def test_login_json_returns_token_for_valid_credentials(client: TestClient):
     assert payload["token_type"] == "bearer"
 
 
+def test_login_json_trims_and_ignores_username_case(client: TestClient):
+    create_user("admin", "admin")
+
+    response = client.post(
+        "/api/auth/login-json",
+        json={"username": "  ADMIN  ", "password": "admin"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "access_token" in payload
+    assert payload["token_type"] == "bearer"
+
+
 def test_login_json_rejects_invalid_credentials(client: TestClient):
     create_user("admin", "admin")
 
