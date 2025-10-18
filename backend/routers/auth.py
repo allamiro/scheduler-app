@@ -1,6 +1,7 @@
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, UserRole
@@ -32,12 +33,30 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+def _normalize_username(raw_username: str) -> str:
+    """Normalize usernames to ensure consistent lookups."""
+    return raw_username.strip()
+
+
+def _get_user_by_username(db: Session, raw_username: str) -> User | None:
+    """Fetch a user with case-insensitive username matching."""
+    normalized_username = _normalize_username(raw_username)
+    if not normalized_username:
+        return None
+
+    return (
+        db.query(User)
+        .filter(func.lower(User.username) == normalized_username.lower())
+        .first()
+    )
+
+
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == form_data.username).first()
+    user = _get_user_by_username(db, form_data.username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,7 +75,7 @@ async def login_json(
     login_data: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == login_data.username).first()
+    user = _get_user_by_username(db, login_data.username)
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
