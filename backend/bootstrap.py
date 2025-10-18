@@ -28,32 +28,6 @@ def ensure_default_admin(db: Session) -> Optional[User]:
 
     existing_user = get_user_by_username(db, username)
     if existing_user:
-        if settings.DEFAULT_ADMIN_ENSURE_CREDENTIALS:
-            updates_applied = False
-
-            # Align email with configured default when provided
-            if settings.DEFAULT_ADMIN_EMAIL and (
-                existing_user.email != settings.DEFAULT_ADMIN_EMAIL
-            ):
-                existing_user.email = settings.DEFAULT_ADMIN_EMAIL
-                updates_applied = True
-
-            password = settings.DEFAULT_ADMIN_PASSWORD
-            if password:
-                hashed = existing_user.hashed_password or ""
-                try:
-                    password_matches = verify_password(password, hashed)
-                except Exception:  # pragma: no cover - defensive
-                    password_matches = False
-
-                if not password_matches:
-                    existing_user.hashed_password = get_password_hash(password)
-                    updates_applied = True
-
-            if updates_applied:
-                db.commit()
-                db.refresh(existing_user)
-                logger.info("Synchronized default admin credentials for '%s'", username)
         return None
 
     email = settings.DEFAULT_ADMIN_EMAIL or f"{username}@scheduler.local"

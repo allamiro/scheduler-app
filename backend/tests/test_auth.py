@@ -12,7 +12,7 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 from database import Base, engine, SessionLocal, get_db  # noqa: E402
 from main import app  # noqa: E402
 from models import User, UserRole  # noqa: E402
-from auth import get_password_hash, verify_password  # noqa: E402
+from auth import get_password_hash  # noqa: E402
 from bootstrap import ensure_default_admin  # noqa: E402
 from config import settings  # noqa: E402
 from utils.auth import get_user_by_username, normalize_username  # noqa: E402
@@ -152,85 +152,5 @@ def test_ensure_default_admin_creates_user_when_missing():
         users = db.query(User).all()
         assert len(users) == 1
         assert users[0].role == UserRole.ADMIN
-    finally:
-        db.close()
-
-
-def test_ensure_default_admin_updates_existing_credentials_when_enabled(monkeypatch):
-    db = SessionLocal()
-    try:
-        ensure_default_admin(db)
-        user = get_user_by_username(db, settings.DEFAULT_ADMIN_USERNAME)
-        assert user is not None
-
-        # Simulate drift in stored credentials
-        user.email = "custom@example.com"
-        user.hashed_password = get_password_hash("different")
-        db.commit()
-
-        monkeypatch.setattr(settings, "DEFAULT_ADMIN_ENSURE_CREDENTIALS", True)
-        monkeypatch.setattr(settings, "DEFAULT_ADMIN_EMAIL", "admin@scheduler.local")
-        monkeypatch.setattr(settings, "DEFAULT_ADMIN_PASSWORD", "admin")
-
-        ensure_default_admin(db)
-        db.refresh(user)
-
-        assert user.email == "admin@scheduler.local"
-        assert verify_password("admin", user.hashed_password)
-    finally:
-        db.close()
-
-
-def test_ensure_default_admin_respects_disabled_sync(monkeypatch):
-    db = SessionLocal()
-    try:
-        ensure_default_admin(db)
-        user = get_user_by_username(db, settings.DEFAULT_ADMIN_USERNAME)
-        assert user is not None
-
-        user.email = "custom@example.com"
-        user.hashed_password = get_password_hash("different")
-        db.commit()
-
-        monkeypatch.setattr(settings, "DEFAULT_ADMIN_ENSURE_CREDENTIALS", False)
-
-        ensure_default_admin(db)
-        db.refresh(user)
-
-        assert user.email == "custom@example.com"
-        assert verify_password("different", user.hashed_password)
-    finally:
-        db.close()
-
-
-def test_login_json_restores_default_admin_when_missing(client: TestClient):
-    # Remove the default admin user to simulate a missing account in a seeded environment.
-    db = SessionLocal()
-    try:
-        admin = get_user_by_username(db, settings.DEFAULT_ADMIN_USERNAME)
-        if admin:
-            db.delete(admin)
-            db.commit()
-    finally:
-        db.close()
-
-    response = client.post(
-        "/api/auth/login-json",
-        json={
-            "username": settings.DEFAULT_ADMIN_USERNAME,
-            "password": settings.DEFAULT_ADMIN_PASSWORD,
-        },
-    )
-
-    assert response.status_code == 200
-    token_payload = response.json()
-    assert "access_token" in token_payload
-    assert token_payload["token_type"] == "bearer"
-
-    # Verify the admin is re-provisioned for subsequent operations.
-    db = SessionLocal()
-    try:
-        admin = get_user_by_username(db, settings.DEFAULT_ADMIN_USERNAME)
-        assert admin is not None
     finally:
         db.close()

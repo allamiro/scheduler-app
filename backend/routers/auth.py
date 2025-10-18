@@ -1,6 +1,7 @@
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, UserRole
@@ -8,7 +9,6 @@ from auth import verify_password, create_access_token, get_current_user, get_pas
 from config import settings
 from pydantic import BaseModel
 from utils.auth import get_user_by_username, normalize_username
-from bootstrap import ensure_default_admin
 
 router = APIRouter()
 
@@ -61,7 +61,6 @@ async def login(
             detail="Username is required",
         )
 
-    _sync_default_admin_if_applicable(db, normalized_username)
     user = get_user_by_username(db, normalized_username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -88,7 +87,6 @@ async def login_json(
             detail="Username is required",
         )
 
-    _sync_default_admin_if_applicable(db, normalized_username)
     user = get_user_by_username(db, normalized_username)
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
