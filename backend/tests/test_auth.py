@@ -13,6 +13,9 @@ from database import Base, engine, SessionLocal, get_db  # noqa: E402
 from main import app  # noqa: E402
 from models import User, UserRole  # noqa: E402
 from auth import get_password_hash  # noqa: E402
+from bootstrap import ensure_default_admin  # noqa: E402
+from config import settings  # noqa: E402
+from utils.auth import get_user_by_username, normalize_username  # noqa: E402
 
 
 def override_get_db() -> Generator[Session, None, None]:
@@ -43,14 +46,23 @@ def client() -> Generator[TestClient, None, None]:
 def create_user(username: str, password: str, role: UserRole = UserRole.ADMIN) -> User:
     db = SessionLocal()
     try:
-        user = User(
-            username=username,
-            email=f"{username}@example.com",
-            hashed_password=get_password_hash(password),
-            role=role,
-            is_active=True,
-        )
-        db.add(user)
+        normalized_username = normalize_username(username)
+        user = get_user_by_username(db, normalized_username)
+        if user is None:
+            user = User(
+                username=normalized_username,
+                email=f"{normalized_username}@example.com",
+                role=role,
+                is_active=True,
+                hashed_password="",
+            )
+            db.add(user)
+
+        user.email = f"{normalized_username}@example.com"
+        user.role = role
+        user.is_active = True
+        user.hashed_password = get_password_hash(password)
+
         db.commit()
         db.refresh(user)
         return user
@@ -124,3 +136,21 @@ def test_me_endpoint_rejects_missing_token(client: TestClient):
     # HTTPBearer returns 403 when credentials are missing
     assert response.status_code == 403
     assert response.json()["detail"] == "Not authenticated"
+
+
+def test_ensure_default_admin_creates_user_when_missing():
+    db = SessionLocal()
+    try:
+        created = ensure_default_admin(db)
+        assert created is not None
+        assert created.username == settings.DEFAULT_ADMIN_USERNAME.strip()
+
+        # Calling again should be a no-op
+        second_created = ensure_default_admin(db)
+        assert second_created is None
+
+        users = db.query(User).all()
+        assert len(users) == 1
+        assert users[0].role == UserRole.ADMIN
+    finally:
+        db.close()

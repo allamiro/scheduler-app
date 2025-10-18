@@ -6,19 +6,29 @@ from contextlib import asynccontextmanager
 import redis
 from datetime import datetime
 
-from database import engine, get_db
+from database import engine, get_db, SessionLocal
 from models import Base
 from auth import get_current_user, User
 from routers import auth, users, doctors, schedules, published
 from config import settings
+from bootstrap import ensure_default_admin
+import logging
 
 # Initialize Redis
 redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        created_admin = ensure_default_admin(db)
+        if created_admin:
+            logger.info(
+                "Default admin '%s' provisioned during startup", created_admin.username
+            )
     yield
     # Shutdown
     redis_client.close()
