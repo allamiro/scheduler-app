@@ -37,7 +37,12 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await apiClient.login(credentials)
+      const normalizedCredentials = {
+        username: credentials.username.trim(),
+        password: credentials.password,
+      }
+
+      await apiClient.login(normalizedCredentials)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

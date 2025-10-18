@@ -6,7 +6,7 @@ from models import Schedule, Assignment, Doctor, AssignmentType, Capacity
 from auth import get_current_user
 from pydantic import BaseModel
 from datetime import datetime, date, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import uuid
 
 router = APIRouter()
@@ -42,6 +42,14 @@ def get_week_dates(week_start: date) -> List[date]:
     """Get all 7 dates for a week starting from Monday"""
     return [week_start + timedelta(days=i) for i in range(7)]
 
+
+def _assignment_day_bounds(assignment_date: date) -> Tuple[datetime, datetime]:
+    """Return datetime bounds that cover the full assignment day."""
+    start_of_day = datetime.combine(assignment_date, datetime.min.time())
+    end_of_day = datetime.combine(assignment_date, datetime.max.time())
+    return start_of_day, end_of_day
+
+
 def validate_assignment(db: Session, assignment_data: AssignmentCreate, schedule_id: int) -> None:
     """Validate assignment constraints"""
     # Check if doctor exists and is active
@@ -52,6 +60,8 @@ def validate_assignment(db: Session, assignment_data: AssignmentCreate, schedule
             detail="Doctor not found or inactive"
         )
     
+    day_start, day_end = _assignment_day_bounds(assignment_data.assignment_date)
+
     # Check capacity constraint
     capacity = db.query(Capacity).filter(Capacity.assignment_type == assignment_data.assignment_type).first()
     if not capacity:
@@ -59,15 +69,16 @@ def validate_assignment(db: Session, assignment_data: AssignmentCreate, schedule
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Assignment type capacity not configured"
         )
-    
+
     current_count = db.query(Assignment).filter(
         and_(
             Assignment.schedule_id == schedule_id,
-            Assignment.assignment_date == assignment_data.assignment_date,
+            Assignment.assignment_date >= day_start,
+            Assignment.assignment_date <= day_end,
             Assignment.assignment_type == assignment_data.assignment_type
         )
     ).count()
-    
+
     if current_count >= capacity.max_capacity:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -79,7 +90,8 @@ def validate_assignment(db: Session, assignment_data: AssignmentCreate, schedule
         and_(
             Assignment.schedule_id == schedule_id,
             Assignment.doctor_id == assignment_data.doctor_id,
-            Assignment.assignment_date == assignment_data.assignment_date
+            Assignment.assignment_date >= day_start,
+            Assignment.assignment_date <= day_end
         )
     ).first()
     
