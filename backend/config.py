@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     CORS_ORIGINS: str = "http://localhost:3000"
+    DEFAULT_ADMIN_USERNAME: str = "admin"
+    DEFAULT_ADMIN_PASSWORD: str = "admin"
+    DEFAULT_ADMIN_EMAIL: str = "admin@scheduler.local"
     
     class Config:
         env_file = ".env"
