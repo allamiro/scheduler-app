@@ -7,7 +7,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from auth import get_password_hash
+from auth import get_password_hash, verify_password
 from config import settings
 from models import User, UserRole
 from utils.auth import get_user_by_username, normalize_username

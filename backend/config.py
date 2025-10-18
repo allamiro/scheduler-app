@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_USERNAME: str = "admin"
     DEFAULT_ADMIN_PASSWORD: str = "admin"
     DEFAULT_ADMIN_EMAIL: str = "admin@scheduler.local"
+    DEFAULT_ADMIN_ENSURE_CREDENTIALS: bool = True
     
     class Config:
         env_file = ".env"

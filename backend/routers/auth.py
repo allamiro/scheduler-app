@@ -34,23 +34,6 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-def _normalize_username(raw_username: str) -> str:
-    """Normalize usernames to ensure consistent lookups."""
-    return raw_username.strip()
-
-
-def _get_user_by_username(db: Session, raw_username: str) -> User | None:
-    """Fetch a user with case-insensitive username matching."""
-    normalized_username = _normalize_username(raw_username)
-    if not normalized_username:
-        return None
-
-    return (
-        db.query(User)
-        .filter(func.lower(User.username) == normalized_username.lower())
-        .first()
-    )
-
 
 @router.post("/login", response_model=Token)
 async def login(
