@@ -126,6 +126,7 @@ async def get_schedules(
             id=schedule.id,
             week_start_date=schedule.week_start_date,
             week_end_date=schedule.week_end_date,
+            is_published=schedule.is_published,
             assignments=assignment_responses
         ))
     return result

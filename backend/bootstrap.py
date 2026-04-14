@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from auth import get_password_hash, verify_password
 from config import settings
-from models import User, UserRole
+from models import User, UserRole, Capacity, AssignmentType
 from utils.auth import get_user_by_username, normalize_username
 
 logger = logging.getLogger(__name__)
@@ -50,4 +50,29 @@ def ensure_default_admin(db: Session) -> Optional[User]:
 
     logger.info("Provisioned default admin user '%s'", username)
     return admin_user
+
+
+def ensure_default_capacities(db: Session) -> None:
+    """Seed the Capacity table with default values if it is empty."""
+    DEFAULT_CAPACITIES = [
+        (AssignmentType.ULTRASOUND_MORNING,   3),
+        (AssignmentType.ULTRASOUND_AFTERNOON, 3),
+        (AssignmentType.XRAY,                 2),
+        (AssignmentType.CT_SCAN,              1),
+        (AssignmentType.MRI,                  1),
+        (AssignmentType.DUTY,                 1),
+    ]
+
+    seeded = False
+    for assignment_type, max_capacity in DEFAULT_CAPACITIES:
+        exists = db.query(Capacity).filter(
+            Capacity.assignment_type == assignment_type
+        ).first()
+        if not exists:
+            db.add(Capacity(assignment_type=assignment_type, max_capacity=max_capacity))
+            seeded = True
+
+    if seeded:
+        db.commit()
+        logger.info("Seeded default capacity rows for all assignment types")
 

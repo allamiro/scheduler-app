@@ -11,7 +11,7 @@ from models import Base
 from auth import get_current_user, User
 from routers import auth, users, doctors, schedules, published
 from config import settings
-from bootstrap import ensure_default_admin
+from bootstrap import ensure_default_admin, ensure_default_capacities
 import logging
 
 # Initialize Redis
@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     # Startup
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
+        ensure_default_capacities(db)
         created_admin = ensure_default_admin(db)
         if created_admin:
             logger.info(
