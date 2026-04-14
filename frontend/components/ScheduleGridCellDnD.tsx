@@ -3,7 +3,6 @@
 import { Assignment, AssignmentType, ASSIGNMENT_TYPES, Doctor } from '@/lib/types'
 import { DoctorCard } from './DoctorCard'
 import { X, Plus } from 'lucide-react'
-import { TableCell } from '@/components/ui/table'
 import { useDroppable } from '@dnd-kit/core'
 import { cn } from '@/lib/utils'
 
@@ -60,20 +59,20 @@ export function ScheduleGridCellDnD({
 
   return (
     <>
-      <TableCell 
+      <td
         ref={setNodeRef}
         className={cn(
-          "min-h-[60px] min-w-[120px] p-2 relative transition-all duration-200",
+          "p-1 relative transition-all duration-200 align-top",
           // Base styling
-          userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border border-dashed border-gray-300' : 
-          isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border border-red-200' : 
+          userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border border-dashed border-gray-300' :
+          isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border border-red-200' :
           'bg-gradient-to-br from-white to-emerald-50 cursor-pointer hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 border border-emerald-200 hover:border-blue-300',
           // Drag over styling
           isOver && !isAtCapacity && userRole !== 'viewer' && 'bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-400 shadow-lg scale-105',
           "rounded shadow-sm hover:shadow-md"
         )}
-        title={userRole === 'viewer' ? 'Read-only view' : 
-               isAtCapacity ? `At capacity (${assignments.length}/${assignmentTypeConfig?.capacity})` : 
+        title={userRole === 'viewer' ? 'Read-only view' :
+               isAtCapacity ? `At capacity (${assignments.length}/${assignmentTypeConfig?.capacity})` :
                availableDoctors.length === 0 ? 'No available doctors' : 'Drag doctor here to assign'}
       >
         <div className="space-y-2">
@@ -101,17 +100,17 @@ export function ScheduleGridCellDnD({
           ))}
           
           {assignments.length === 0 && !isAtCapacity && userRole !== 'viewer' && (
-            <div className="text-xs text-emerald-600 text-center py-3 flex flex-col items-center">
-              <div className="bg-emerald-100 rounded-full p-1 mb-1">
-                <Plus className="h-3 w-3 text-emerald-600" />
+            <div className="text-[10px] text-emerald-600 text-center py-2 flex flex-col items-center">
+              <div className="bg-emerald-100 rounded-full p-0.5 mb-0.5">
+                <Plus className="h-2.5 w-2.5 text-emerald-600" />
               </div>
-              <span className="font-medium text-xs">Drag doctor here</span>
+              <span className="font-medium leading-tight">Drag here</span>
             </div>
           )}
-          
+
           {isAtCapacity && (
-            <div className="text-xs text-red-600 text-center mt-1 bg-red-100 rounded px-2 py-1 font-medium">
-              At capacity ({assignments.length}/{assignmentTypeConfig?.capacity})
+            <div className="text-[10px] text-red-600 text-center mt-0.5 bg-red-100 rounded px-1 py-0.5 font-medium leading-tight">
+              Full {assignments.length}/{assignmentTypeConfig?.capacity}
             </div>
           )}
 
@@ -124,7 +123,7 @@ export function ScheduleGridCellDnD({
             </div>
           )}
         </div>
-      </TableCell>
+      </td>
 
     </>
   )
