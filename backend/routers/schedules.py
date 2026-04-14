@@ -30,6 +30,7 @@ class ScheduleResponse(BaseModel):
     id: int
     week_start_date: date
     week_end_date: date
+    is_published: bool
     assignments: List[AssignmentResponse]
 
     class Config:
@@ -136,6 +137,8 @@ async def create_schedule(
     current_user = Depends(get_current_user)
 ):
     """Create a new schedule for a week"""
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Viewers cannot create schedules")
     # Calculate week end date (Sunday)
     week_end = schedule_data.week_start_date + timedelta(days=6)
     
@@ -166,6 +169,7 @@ async def create_schedule(
         id=schedule.id,
         week_start_date=schedule.week_start_date,
         week_end_date=schedule.week_end_date,
+        is_published=schedule.is_published,
         assignments=[]
     )
 
@@ -199,6 +203,7 @@ async def get_schedule(
         id=schedule.id,
         week_start_date=schedule.week_start_date,
         week_end_date=schedule.week_end_date,
+        is_published=schedule.is_published,
         assignments=assignment_responses
     )
 
@@ -210,6 +215,8 @@ async def create_assignment(
     current_user = Depends(get_current_user)
 ):
     """Create a new assignment"""
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Viewers cannot create assignments")
     # Check if schedule exists
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not schedule:
@@ -255,6 +262,8 @@ async def delete_assignment(
     current_user = Depends(get_current_user)
 ):
     """Delete an assignment"""
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Viewers cannot delete assignments")
     # Check if schedule is published
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if schedule and schedule.is_published:
@@ -296,7 +305,11 @@ async def get_schedule_by_week(
     ).first()
     
     if not schedule:
-        # Create schedule if not found
+        if current_user.role == "viewer":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No schedule found for this week"
+            )
         schedule = Schedule(
             week_start_date=week_start_date,
             week_end_date=week_end,
@@ -322,5 +335,6 @@ async def get_schedule_by_week(
         id=schedule.id,
         week_start_date=schedule.week_start_date,
         week_end_date=schedule.week_end_date,
+        is_published=schedule.is_published,
         assignments=assignment_responses
     )

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { apiClient } from '@/lib/api'
 import { User, UserRole } from '@/lib/types'
 import { Plus, Edit2, Trash2, Users, Eye, EyeOff } from 'lucide-react'
+import { toast } from '@/lib/use-toast'
 
 interface UserManagementDialogProps {
   onSuccess?: () => void
@@ -32,29 +33,24 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
   })
   const [showPassword, setShowPassword] = useState(false)
 
-  // Role counting
-  const getRoleCount = (role: UserRole) => {
-    return users.filter(user => user.role === role && user.is_active).length
+  // Role counting — exclude the user being edited from their own current role count
+  // so that "Admin (Max reached)" doesn't block re-saving an existing admin.
+  const getRoleCount = (role: UserRole, excludeUserId?: number) => {
+    return users.filter(u => u.role === role && u.is_active && u.id !== excludeUserId).length
   }
 
-  const canCreateRole = (role: UserRole) => {
-    const counts = {
-      admin: getRoleCount('admin'),
-      editor: getRoleCount('editor'),
-      viewer: getRoleCount('viewer')
-    }
-    
+  const canSelectRole = (role: UserRole) => {
+    const excludeId = editingUser?.id
     switch (role) {
-      case 'admin':
-        return counts.admin < 1 // Max 1 admin
-      case 'editor':
-        return counts.editor < 4 // Max 4 editors
-      case 'viewer':
-        return true // No limit on viewers
-      default:
-        return false
+      case 'admin':  return getRoleCount('admin',  excludeId) < 1
+      case 'editor': return getRoleCount('editor', excludeId) < 4
+      case 'viewer': return true
+      default:       return false
     }
   }
+
+  // Keep canCreateRole for the create-form path (no excluded user)
+  const canCreateRole = (role: UserRole) => canSelectRole(role)
 
   useEffect(() => {
     if (isOpen) {
@@ -105,11 +101,8 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
       // Reload users
       await loadUsers()
       
-      if (onSuccess) {
-        onSuccess()
-      }
-      
-      alert('User created successfully!')
+      if (onSuccess) onSuccess()
+      toast.success('User created successfully')
       
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create user')
@@ -162,11 +155,8 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
       // Reload users
       await loadUsers()
       
-      if (onSuccess) {
-        onSuccess()
-      }
-      
-      alert('User updated successfully!')
+      if (onSuccess) onSuccess()
+      toast.success('User updated successfully')
       
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to update user')
@@ -176,23 +166,12 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
   }
 
   const handleDeleteUser = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) {
-      return
-    }
-
     try {
       setLoading(true)
       await apiClient.deleteUser(userId)
-      
-      // Reload users
       await loadUsers()
-      
-      if (onSuccess) {
-        onSuccess()
-      }
-      
-      alert('User deleted successfully!')
-      
+      if (onSuccess) onSuccess()
+      toast.success('User deleted')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to delete user')
     } finally {
@@ -349,11 +328,11 @@ export function UserManagementDialog({ onSuccess }: UserManagementDialogProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin" disabled={!canCreateRole('admin')}>
-                          Admin {getRoleCount('admin') >= 1 ? '(Max reached)' : ''}
+                        <SelectItem value="admin" disabled={!canSelectRole('admin')}>
+                          Admin {!canSelectRole('admin') ? '(Max reached)' : ''}
                         </SelectItem>
-                        <SelectItem value="editor" disabled={!canCreateRole('editor')}>
-                          Editor {getRoleCount('editor') >= 4 ? '(Max reached)' : ''}
+                        <SelectItem value="editor" disabled={!canSelectRole('editor')}>
+                          Editor {!canSelectRole('editor') ? '(Max reached)' : ''}
                         </SelectItem>
                         <SelectItem value="viewer">Viewer</SelectItem>
                       </SelectContent>

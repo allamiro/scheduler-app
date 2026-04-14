@@ -9,6 +9,7 @@ interface ScheduleGridDnDProps {
   doctors: Doctor[]
   currentWeek: Date
   userRole?: string
+  isPublished?: boolean
   onAssignmentCreate: (assignment: {
     doctor_id: number
     assignment_date: string
@@ -32,6 +33,7 @@ export function ScheduleGridDnD({
   doctors,
   currentWeek,
   userRole,
+  isPublished = false,
   onAssignmentCreate,
   onAssignmentDelete,
 }: ScheduleGridDnDProps) {
@@ -139,6 +141,7 @@ export function ScheduleGridDnD({
                     assignments={getAssignmentsForCell(date, assignmentType.type)}
                     doctors={doctors}
                     userRole={userRole}
+                    isPublished={isPublished}
                     onAssignmentDelete={onAssignmentDelete}
                     onAssignmentCreate={onAssignmentCreate}
                   />

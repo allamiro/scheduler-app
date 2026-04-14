@@ -12,6 +12,7 @@ import { UserManagementDialog } from '@/components/UserManagementDialog'
 import { HolidaySidebar } from '@/components/HolidaySidebar'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection, useDroppable } from '@dnd-kit/core'
 import { apiClient } from '@/lib/api'
+import { toast } from '@/lib/use-toast'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
 import { Calendar, Users, LogOut, History, User, Sparkles } from 'lucide-react'
@@ -146,7 +147,7 @@ export default function DashboardPage() {
       } : null)
     } catch (error) {
       console.error('Failed to create assignment:', error)
-      alert(error instanceof Error ? error.message : 'Failed to create assignment')
+      toast.error('Assignment failed', error instanceof Error ? error.message : 'Failed to create assignment')
     }
   }
 
@@ -160,7 +161,7 @@ export default function DashboardPage() {
       } : null)
     } catch (error) {
       console.error('Failed to delete assignment:', error)
-      alert(error instanceof Error ? error.message : 'Failed to delete assignment')
+      toast.error('Delete failed', error instanceof Error ? error.message : 'Failed to delete assignment')
     }
   }
 
@@ -201,7 +202,7 @@ export default function DashboardPage() {
     // Dropping on a schedule cell
     if (over.id.toString().includes('||') && active.id.toString().startsWith('doctor-')) {
       if (user?.role === 'viewer') {
-        alert('You do not have permission to make assignments!')
+        toast.warning('Read-only', 'Viewers cannot make assignments')
         return
       }
 
@@ -214,7 +215,7 @@ export default function DashboardPage() {
       const assignmentTypeConfig = ASSIGNMENT_TYPES.find(type => type.type === assignmentType)
 
       if (!assignmentTypeConfig) {
-        alert(`Invalid assignment type: ${assignmentType}`)
+        toast.error('Invalid drop target', `Unknown assignment type: ${assignmentType}`)
         return
       }
 
@@ -223,7 +224,7 @@ export default function DashboardPage() {
       ) || []
 
       if (existingAssignments.length >= assignmentTypeConfig.capacity) {
-        alert(`This assignment is at capacity! (${existingAssignments.length}/${assignmentTypeConfig.capacity})`)
+        toast.warning('At capacity', `${assignmentTypeConfig.label} is full (${existingAssignments.length}/${assignmentTypeConfig.capacity})`)
         return
       }
 
@@ -232,7 +233,7 @@ export default function DashboardPage() {
       )
 
       if (doctorAssignedToday) {
-        alert('This doctor is already assigned to this date!')
+        toast.warning('Already assigned', 'This doctor already has an assignment on this date')
         return
       }
 
@@ -407,6 +408,7 @@ export default function DashboardPage() {
                       doctors={doctors}
                       currentWeek={currentWeek}
                       userRole={user?.role}
+                      isPublished={schedule?.is_published ?? false}
                       onAssignmentCreate={handleAssignmentCreate}
                       onAssignmentDelete={handleAssignmentDelete}
                     />

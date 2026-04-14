@@ -12,6 +12,7 @@ interface ScheduleGridCellDnDProps {
   assignments: Assignment[]
   doctors: Doctor[]
   userRole?: string
+  isPublished?: boolean
   onAssignmentDelete: (assignmentId: number) => void
   onAssignmentCreate: (assignment: {
     doctor_id: number
@@ -26,6 +27,7 @@ export function ScheduleGridCellDnD({
   assignments,
   doctors,
   userRole,
+  isPublished = false,
   onAssignmentDelete,
   onAssignmentCreate
 }: ScheduleGridCellDnDProps) {
@@ -44,9 +46,11 @@ export function ScheduleGridCellDnD({
   // Create unique droppable ID for this cell using a separator that won't conflict with assignment types
   const cellId = `${date.toISOString().split('T')[0]}||${assignmentType}`
   
+  const isReadOnly = userRole === 'viewer' || isPublished
+
   const { isOver, setNodeRef } = useDroppable({
     id: cellId,
-    disabled: userRole === 'viewer' || isAtCapacity,
+    disabled: isReadOnly || isAtCapacity,
     data: {
       date: date.toISOString().split('T')[0],
       assignmentType,
@@ -63,15 +67,14 @@ export function ScheduleGridCellDnD({
         ref={setNodeRef}
         className={cn(
           "p-1 relative transition-all duration-200 align-top",
-          // Base styling
-          userRole === 'viewer' ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border border-dashed border-gray-300' :
+          isReadOnly ? 'bg-gradient-to-br from-gray-50 to-gray-100 cursor-default border border-dashed border-gray-300' :
           isAtCapacity ? 'bg-gradient-to-br from-red-50 to-red-100 cursor-not-allowed border border-red-200' :
           'bg-gradient-to-br from-white to-emerald-50 cursor-pointer hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 border border-emerald-200 hover:border-blue-300',
-          // Drag over styling
-          isOver && !isAtCapacity && userRole !== 'viewer' && 'bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-400 shadow-lg scale-105',
+          isOver && !isAtCapacity && !isReadOnly && 'bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-400 shadow-lg scale-105',
           "rounded shadow-sm hover:shadow-md"
         )}
-        title={userRole === 'viewer' ? 'Read-only view' :
+        title={isPublished ? 'Published — unpublish to edit' :
+               userRole === 'viewer' ? 'Read-only view' :
                isAtCapacity ? `At capacity (${assignments.length}/${assignmentTypeConfig?.capacity})` :
                availableDoctors.length === 0 ? 'No available doctors' : 'Drag doctor here to assign'}
       >
@@ -87,7 +90,7 @@ export function ScheduleGridCellDnD({
                 }}
                 isAssignment
               />
-              {userRole !== 'viewer' && (
+              {!isReadOnly && (
                 <button
                   onClick={() => onAssignmentDelete(assignment.id)}
                   className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
@@ -99,7 +102,7 @@ export function ScheduleGridCellDnD({
             </div>
           ))}
           
-          {assignments.length === 0 && !isAtCapacity && userRole !== 'viewer' && (
+          {assignments.length === 0 && !isAtCapacity && !isReadOnly && availableDoctors.length > 0 && (
             <div className="text-[10px] text-emerald-600 text-center py-2 flex flex-col items-center">
               <div className="bg-emerald-100 rounded-full p-0.5 mb-0.5">
                 <Plus className="h-2.5 w-2.5 text-emerald-600" />
@@ -115,7 +118,7 @@ export function ScheduleGridCellDnD({
           )}
 
           {/* Drag over indicator */}
-          {isOver && !isAtCapacity && userRole !== 'viewer' && (
+          {isOver && !isAtCapacity && !isReadOnly && (
             <div className="absolute inset-0 bg-blue-200 bg-opacity-50 rounded flex items-center justify-center">
               <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
                 Drop here

@@ -105,13 +105,15 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str, pre
     # Generate approver/preparer section
     approver_section = ""
     if prepared_by or approved_by:
+        safe_prepared = html_escape(prepared_by) if prepared_by else 'Not specified'
+        safe_approved = html_escape(approved_by) if approved_by else 'Not specified'
         approver_section = f"""
         <div class="approver-section" style="margin-bottom: 20px; text-align: center;">
             <div style="display: inline-block; margin: 0 20px;">
-                <strong>Prepared by:</strong> {prepared_by or 'Not specified'}
+                <strong>Prepared by:</strong> {safe_prepared}
             </div>
             <div style="display: inline-block; margin: 0 20px;">
-                <strong>Approved by:</strong> {approved_by or 'Not specified'}
+                <strong>Approved by:</strong> {safe_approved}
             </div>
         </div>
         """
@@ -259,6 +261,8 @@ async def publish_schedule(
     current_user = Depends(get_current_user)
 ):
     """Publish a schedule to create an immutable snapshot"""
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins and editors can publish schedules")
     # Get the schedule
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not schedule:

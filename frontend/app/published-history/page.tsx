@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ExternalLink, Trash2, Calendar, User, Sparkles } from 'lucide-react'
+import { toast } from '@/lib/use-toast'
 
 export default function PublishedHistoryPage() {
   const [publishedSchedules, setPublishedSchedules] = useState<PublishedSchedule[]>([])
@@ -31,17 +32,21 @@ export default function PublishedHistoryPage() {
     }
   }
 
+  const [unpublishingId, setUnpublishingId] = useState<number | null>(null)
+
   const handleUnpublish = async (scheduleId: number) => {
-    if (!confirm('Are you sure you want to unpublish this schedule? This will remove all published versions and allow editing.')) {
+    // Require a second click as confirmation instead of window.confirm
+    if (unpublishingId !== scheduleId) {
+      setUnpublishingId(scheduleId)
       return
     }
-
+    setUnpublishingId(null)
     try {
       await apiClient.unpublishSchedule(scheduleId)
-      alert('Schedule unpublished successfully!')
-      loadPublishedSchedules() // Reload the list
+      toast.success('Schedule unpublished', 'The schedule is now editable again')
+      loadPublishedSchedules()
     } catch (err) {
-      alert(`Failed to unpublish schedule: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      toast.error('Unpublish failed', err instanceof Error ? err.message : 'Unknown error')
     }
   }
 
@@ -168,10 +173,14 @@ export default function PublishedHistoryPage() {
                     <Button
                       variant="destructive"
                       onClick={() => handleUnpublish(schedule.schedule_id)}
-                      className="flex items-center gap-2 rounded-full bg-rose-500/80 text-white hover:bg-rose-500"
+                      className={`flex items-center gap-2 rounded-full text-white transition ${
+                        unpublishingId === schedule.schedule_id
+                          ? 'bg-rose-700 ring-2 ring-rose-400'
+                          : 'bg-rose-500/80 hover:bg-rose-500'
+                      }`}
                     >
                       <Trash2 className="h-4 w-4" />
-                      Unpublish
+                      {unpublishingId === schedule.schedule_id ? 'Confirm Unpublish?' : 'Unpublish'}
                     </Button>
                   </div>
                   <div className="mt-4 text-sm text-indigo-100/80">

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
+import { toast } from '@/lib/use-toast'
 
 interface DoctorSidebarDnDProps {
   doctors: Doctor[]
@@ -19,6 +20,10 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null)
+  // Tracks which doctor ID is pending confirmation of deletion
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
+  // Tracks a doctor that has assignments and needs a second-step confirm to clear + delete
+  const [pendingClearAndDelete, setPendingClearAndDelete] = useState<{ id: number; message: string } | null>(null)
 
   const filteredDoctors = doctors.filter(doctor =>
     doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,36 +31,39 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
   )
 
   const handleDeleteDoctor = async (doctorId: number) => {
-    if (confirm('Are you sure you want to delete this doctor?')) {
-      try {
-        await apiClient.deleteDoctor(doctorId)
-        onDoctorUpdate()
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to delete doctor'
-        
-        // Check if the error mentions assignments
-        if (errorMessage.includes('assignment(s)')) {
-          const shouldClearAssignments = confirm(
-            `${errorMessage}\n\nWould you like to clear all assignments for this doctor and then delete them?`
-          )
-          
-          if (shouldClearAssignments) {
-            try {
-              const result = await apiClient.clearDoctorAssignments(doctorId)
-              alert(result.message)
-              
-              // Try to delete the doctor again
-              await apiClient.deleteDoctor(doctorId)
-              alert('Doctor deleted successfully!')
-              onDoctorUpdate()
-            } catch (clearError) {
-              alert(`Failed to clear assignments: ${clearError instanceof Error ? clearError.message : 'Unknown error'}`)
-            }
-          }
-        } else {
-          alert(errorMessage)
-        }
+    // First click — ask for confirmation inline instead of window.confirm
+    if (pendingDeleteId !== doctorId) {
+      setPendingDeleteId(doctorId)
+      return
+    }
+    // Second click — confirmed
+    setPendingDeleteId(null)
+    try {
+      await apiClient.deleteDoctor(doctorId)
+      onDoctorUpdate()
+      toast.success('Doctor deleted')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete doctor'
+      if (errorMessage.includes('assignment(s)')) {
+        // Offer clear-and-delete
+        setPendingClearAndDelete({ id: doctorId, message: errorMessage })
+      } else {
+        toast.error('Delete failed', errorMessage)
       }
+    }
+  }
+
+  const handleClearAndDelete = async () => {
+    if (!pendingClearAndDelete) return
+    const { id } = pendingClearAndDelete
+    setPendingClearAndDelete(null)
+    try {
+      const result = await apiClient.clearDoctorAssignments(id)
+      await apiClient.deleteDoctor(id)
+      onDoctorUpdate()
+      toast.success('Doctor deleted', result.message)
+    } catch (error) {
+      toast.error('Failed', error instanceof Error ? error.message : 'Could not clear assignments')
     }
   }
 
@@ -102,12 +110,28 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
         </div>
       </div>
 
+      {/* Clear-and-delete confirmation banner */}
+      {pendingClearAndDelete && (
+        <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="font-semibold mb-1">Doctor has existing assignments</p>
+          <p className="mb-2 leading-snug">Clear all assignments and delete this doctor?</p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={handleClearAndDelete}>
+              Clear &amp; Delete
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setPendingClearAndDelete(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="p-4">
         <div className="space-y-2">
           {filteredDoctors.map(doctor => (
             <div key={doctor.id} className="relative group">
               <DraggableDoctorCard doctor={doctor} />
-              
+
               {/* Action buttons */}
               {userRole !== 'viewer' && (
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1">
@@ -120,17 +144,28 @@ export function DoctorSidebarDnD({ doctors, onDoctorUpdate, userRole }: DoctorSi
                   </button>
                   <button
                     onClick={() => handleDeleteDoctor(doctor.id)}
-                    className="bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                    title="Delete doctor"
+                    className={`text-white rounded-full p-1 transition-colors ${
+                      pendingDeleteId === doctor.id
+                        ? 'bg-red-700 ring-2 ring-red-400'
+                        : 'bg-red-500 hover:bg-red-600'
+                    }`}
+                    title={pendingDeleteId === doctor.id ? 'Click again to confirm' : 'Delete doctor'}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
                 </div>
               )}
+
+              {/* Inline "click again to confirm" label */}
+              {pendingDeleteId === doctor.id && (
+                <div className="mt-1 text-[10px] text-red-600 text-right pr-1 font-medium">
+                  Click again to confirm delete
+                </div>
+              )}
             </div>
           ))}
         </div>
-        
+
         {filteredDoctors.length === 0 && (
           <div className="py-4 text-center text-slate-500">
             {searchTerm ? 'No doctors found matching your search.' : 'No doctors available.'}

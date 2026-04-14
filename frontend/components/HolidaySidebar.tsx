@@ -15,8 +15,9 @@ interface HolidaySidebarProps {
   weekEnd: Date
 }
 
-// 2025 Ethiopian holidays with Gregorian dates
+// Ethiopian public holidays — Gregorian calendar dates
 const SAMPLE_HOLIDAYS: Holiday[] = [
+  // 2025
   { date: '2025-01-07', name: 'Genna (Ethiopian Christmas)', type: 'religious' },
   { date: '2025-01-19', name: 'Timkat (Epiphany)', type: 'religious' },
   { date: '2025-03-02', name: 'Adwa Victory Day', type: 'national' },
@@ -24,12 +25,26 @@ const SAMPLE_HOLIDAYS: Holiday[] = [
   { date: '2025-04-18', name: 'Good Friday (Siklet)', type: 'religious' },
   { date: '2025-04-20', name: 'Fasika (Ethiopian Easter)', type: 'religious' },
   { date: '2025-05-01', name: 'International Labour Day', type: 'national' },
-  { date: '2025-05-05', name: 'Patriots\' Victory Day', type: 'national' },
+  { date: '2025-05-05', name: "Patriots' Victory Day", type: 'national' },
   { date: '2025-05-28', name: 'Downfall of the Derg', type: 'national' },
   { date: '2025-06-07', name: 'Eid al-Adha', type: 'religious' },
-  { date: '2025-09-05', name: 'Mawlid (Prophet\'s Birthday)', type: 'religious' },
-  { date: '2025-09-11', name: 'Enkutatash (New Year)', type: 'national' },
+  { date: '2025-09-05', name: "Mawlid (Prophet's Birthday)", type: 'religious' },
+  { date: '2025-09-11', name: 'Enkutatash (Ethiopian New Year)', type: 'national' },
   { date: '2025-09-27', name: 'Meskel (Finding of the True Cross)', type: 'religious' },
+  // 2026
+  { date: '2026-01-07', name: 'Genna (Ethiopian Christmas)', type: 'religious' },
+  { date: '2026-01-19', name: 'Timkat (Epiphany)', type: 'religious' },
+  { date: '2026-03-02', name: 'Adwa Victory Day', type: 'national' },
+  { date: '2026-03-20', name: 'Eid al-Fitr', type: 'religious' },
+  { date: '2026-04-03', name: 'Good Friday (Siklet)', type: 'religious' },
+  { date: '2026-04-05', name: 'Fasika (Ethiopian Easter)', type: 'religious' },
+  { date: '2026-05-01', name: 'International Labour Day', type: 'national' },
+  { date: '2026-05-05', name: "Patriots' Victory Day", type: 'national' },
+  { date: '2026-05-28', name: 'Downfall of the Derg', type: 'national' },
+  { date: '2026-05-27', name: 'Eid al-Adha', type: 'religious' },
+  { date: '2026-08-25', name: "Mawlid (Prophet's Birthday)", type: 'religious' },
+  { date: '2026-09-11', name: 'Enkutatash (Ethiopian New Year)', type: 'national' },
+  { date: '2026-09-27', name: 'Meskel (Finding of the True Cross)', type: 'religious' },
 ]
 
 export function HolidaySidebar({ weekStart, weekEnd }: HolidaySidebarProps) {

@@ -106,6 +106,8 @@ async def create_doctor(
     current_user = Depends(get_current_user)
 ):
     """Create a new doctor"""
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Viewers cannot create doctors")
     # Check if email already exists (if provided)
     if doctor_data.email:
         existing_doctor = db.query(Doctor).filter(Doctor.email == doctor_data.email).first()
@@ -150,6 +152,8 @@ async def update_doctor(
     current_user = Depends(get_current_user)
 ):
     """Update a doctor"""
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Viewers cannot update doctors")
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
     if not doctor:
         raise HTTPException(
@@ -194,6 +198,8 @@ async def delete_doctor(
     current_user = Depends(get_current_user)
 ):
     """Delete a doctor"""
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins and editors can delete doctors")
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
     if not doctor:
         raise HTTPException(

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { apiClient } from '@/lib/api'
+import { toast } from '@/lib/use-toast'
 import { Key, Eye, EyeOff } from 'lucide-react'
 
 interface ChangePasswordDialogProps {
@@ -54,12 +55,8 @@ export function ChangePasswordDialog({ onSuccess }: ChangePasswordDialogProps) {
       setNewPassword('')
       setConfirmPassword('')
       setIsOpen(false)
-      
-      if (onSuccess) {
-        onSuccess()
-      }
-      
-      alert('Password changed successfully!')
+      if (onSuccess) onSuccess()
+      toast.success('Password changed successfully')
       
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to change password')
@@ -126,6 +123,7 @@ export function ChangePasswordDialog({ onSuccess }: ChangePasswordDialogProps) {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
+                maxLength={72}
                 className="pr-10"
               />
               <button

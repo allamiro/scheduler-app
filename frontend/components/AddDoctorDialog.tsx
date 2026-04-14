@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { apiClient } from '@/lib/api'
+import { toast } from '@/lib/use-toast'
 
 interface AddDoctorDialogProps {
   doctor?: Doctor | null
@@ -37,12 +38,12 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
         await apiClient.createDoctor(formData)
       }
       onSuccess()
+      toast.success(doctor ? 'Doctor updated' : 'Doctor added')
     } catch (error) {
       console.error('Doctor save error:', error)
-      const errorMessage = error instanceof Error ? error.message : 
-        typeof error === 'object' ? JSON.stringify(error) : 
-        String(error)
-      alert(`Failed to save doctor: ${errorMessage}`)
+      const errorMessage = error instanceof Error ? error.message :
+        typeof error === 'object' ? JSON.stringify(error) : String(error)
+      toast.error('Failed to save doctor', errorMessage)
     } finally {
       setLoading(false)
     }
@@ -66,6 +67,7 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
               id="name"
               type="text"
               required
+              maxLength={100}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter doctor's name"
@@ -92,6 +94,7 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
             <Input
               id="phone"
               type="tel"
+              maxLength={30}
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="Enter phone number"
@@ -105,6 +108,7 @@ export function AddDoctorDialog({ doctor, onClose, onSuccess }: AddDoctorDialogP
             <Input
               id="position"
               type="text"
+              maxLength={100}
               value={formData.position}
               onChange={(e) => setFormData({ ...formData, position: e.target.value })}
               placeholder="Enter position/title"

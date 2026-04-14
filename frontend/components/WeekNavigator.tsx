@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
-import { addWeeks, formatDateISO } from '@/lib/utils'
+import { addWeeks, getWeekStart } from '@/lib/utils'
 import { formatWeekRangeWithEthiopian } from '@/lib/ethiopian-calendar'
 
 interface WeekNavigatorProps {
@@ -20,10 +20,7 @@ export function WeekNavigator({ currentWeek, onWeekChange }: WeekNavigatorProps)
   }
 
   const handleToday = () => {
-    const today = new Date()
-    const weekStart = new Date(today)
-    weekStart.setDate(today.getDate() - today.getDay() + 1) // Get Monday
-    onWeekChange(weekStart)
+    onWeekChange(getWeekStart(new Date()))
   }
 
   const formatWeekRange = (weekStart: Date) => {
