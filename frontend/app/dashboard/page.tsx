@@ -335,9 +335,9 @@ export default function DashboardPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-white/15 bg-white/10 p-4 shadow-[0_35px_120px_-45px_rgba(30,64,175,0.7)] backdrop-blur sm:p-6">
-            <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="mx-auto w-full max-w-screen-2xl px-2 py-4 sm:px-4 lg:px-6">
+          <div className="rounded-3xl border border-white/15 bg-white/10 p-2 shadow-[0_35px_120px_-45px_rgba(30,64,175,0.7)] backdrop-blur sm:p-4">
+            <div className="flex flex-col gap-4 lg:flex-row">
               {/* Schedule Grid - Takes priority and most space */}
               <div className="flex-1 min-w-0 overflow-hidden rounded-3xl border border-white/15 bg-white/95 text-slate-900 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.35)]">
                 {/* Hospital and Department Header */}
@@ -401,7 +401,7 @@ export default function DashboardPage() {
 
                   </div>
 
-                  <div className="px-3 py-4 sm:px-6">
+                  <div className="px-1 py-2 sm:px-2">
                     <ScheduleGridDnD
                       schedule={schedule}
                       doctors={doctors}
@@ -415,7 +415,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Right Sidebar - Doctors and Holidays stacked */}
-              <div className="flex-shrink-0 space-y-4 lg:w-80 xl:w-96">
+              <div className="flex-shrink-0 space-y-4 lg:w-64 xl:w-72">
                 {/* Doctors Panel */}
                 <DoctorSidebarDnD
                   doctors={doctors}
