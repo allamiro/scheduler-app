@@ -1,83 +1,193 @@
+# =============================================================================
+# Scheduler App — Docker Compose
+# =============================================================================
+# Prerequisites:
+#   1. Copy .env.example to .env and fill in real values.
+#   2. docker-compose up -d
+# =============================================================================
+
 services:
+
+  # ---------------------------------------------------------------------------
+  # Database
+  # ---------------------------------------------------------------------------
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    env_file: .env
     environment:
-      POSTGRES_DB: scheduler_db
-      POSTGRES_USER: scheduler_user
-      POSTGRES_PASSWORD: scheduler_password
+      POSTGRES_DB: ${POSTGRES_DB:-scheduler_db}
+      POSTGRES_USER: ${POSTGRES_USER:-scheduler_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
+    networks:
+      - backend
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U scheduler_user -d scheduler_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scheduler_user} -d ${POSTGRES_DB:-scheduler_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
+    # DB is NOT exposed to the host — reach it through the api service only.
+    # To connect locally for debugging:
+    #   docker-compose exec db psql -U scheduler_user -d scheduler_db
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
+  # ---------------------------------------------------------------------------
+  # Cache
+  # ---------------------------------------------------------------------------
   cache:
     image: redis:7-alpine
-    ports:
-      - "6380:6379"
+    # Cap memory usage with LRU eviction; disable RDB persistence for cache-only use.
+    # If REDIS_PASSWORD is set in .env, pass it via the REDIS_PASSWORD env var
+    # and the api service will include it in REDIS_URL (redis://:pass@cache:6379).
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    # Redis is NOT exposed to the host.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
 
+  # ---------------------------------------------------------------------------
+  # API (FastAPI)
+  # ---------------------------------------------------------------------------
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql://scheduler_user:scheduler_password@db:5432/scheduler_db
-      REDIS_URL: redis://cache:6379
-      JWT_SECRET_KEY: your-secret-key-change-in-production
-      CORS_ORIGINS: http://localhost:3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-scheduler_user}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-scheduler_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@cache:6379
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:8081}
+      DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:-admin}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?Set DEFAULT_ADMIN_PASSWORD in .env}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@scheduler.local}
     ports:
+      # Exposed so the browser can reach the API directly via NEXT_PUBLIC_API_URL.
+      # In a fully proxied production setup, remove this and route /api/* through Caddy.
       - "8001:8000"
+    networks:
+      - backend   # reaches db and cache
+      - frontend  # reachable by the proxy
     depends_on:
       db:
         condition: service_healthy
       cache:
         condition: service_healthy
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 25s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
+  # ---------------------------------------------------------------------------
+  # Frontend (Next.js)
+  # ---------------------------------------------------------------------------
   web:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8001
+      args:
+        # NEXT_PUBLIC_* vars are baked into the JS bundle at build time.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001}
     ports:
       - "3001:3000"
+    networks:
+      - frontend
     depends_on:
       api:
         condition: service_healthy
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "require('http').get('http://127.0.0.1:3000', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"
       interval: 30s
-      timeout: 10s
+      timeout: 15s
       retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
+  # ---------------------------------------------------------------------------
+  # Reverse Proxy (Caddy)
+  # ---------------------------------------------------------------------------
   proxy:
     image: caddy:2-alpine
     ports:
-      - "8081:80"
-      - "8444:443"
+      - "${HTTP_PORT:-8081}:80"
+      - "${HTTPS_PORT:-8444}:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - frontend
     depends_on:
-      - web
-      - api
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - "CMD"
+        - "wget"
+        - "-qO-"
+        - "http://localhost:80"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 128m
 
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  # backend: only db, cache, and api can communicate here
+  backend:
+    driver: bridge
+  # frontend: api, web, and proxy communicate here
+  frontend:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
   postgres_data:
+  redis_data:
   caddy_data:
   caddy_config:

@@ -1,38 +1,95 @@
-# Caddyfile for Duty Scheduler
-# This configuration provides automatic HTTPS with Let's Encrypt
+# =============================================================================
+# Caddyfile — Duty Scheduler reverse proxy
+# =============================================================================
+# Development: serves on localhost with HTTP only.
+# Production:  replace "localhost" with your real domain; Caddy will obtain
+#              a Let's Encrypt TLS certificate automatically.
+# =============================================================================
 
-# For development with localhost
-localhost:8081 {
-    # Frontend (Next.js)
-    handle / {
-        reverse_proxy web:3000
+localhost {
+
+    # ------------------------------------------------------------------
+    # Security headers applied to every response
+    # ------------------------------------------------------------------
+    header {
+        # Prevent the browser from inferring MIME types
+        X-Content-Type-Options "nosniff"
+        # Deny embedding in iframes from other origins
+        X-Frame-Options "SAMEORIGIN"
+        # Basic XSS filter for older browsers
+        X-XSS-Protection "1; mode=block"
+        # Only send the path in the Referer header when navigating to HTTPS
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Restrict powerful browser features
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        # Remove the server identity header
+        -Server
     }
-    
-    # API (FastAPI)
+
+    # ------------------------------------------------------------------
+    # API — FastAPI backend
+    # ------------------------------------------------------------------
     handle /api/* {
-        reverse_proxy api:8000
+        reverse_proxy api:8000 {
+            # Pass real client IP to the backend
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Health-check the upstream before forwarding
+            health_uri     /health
+            health_interval 15s
+        }
     }
-    
-    # Published schedules
-    handle /p/* {
-        reverse_proxy web:3000
+
+    # ------------------------------------------------------------------
+    # Frontend — Next.js
+    # All remaining paths (including client-side routes) go to the web service.
+    # "handle" with a trailing /* is the correct Caddy catch-all.
+    # ------------------------------------------------------------------
+    handle /* {
+        reverse_proxy web:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 }
 
-# For production with a domain (uncomment and replace with your domain)
-# your-domain.com {
-#     # Frontend (Next.js)
-#     handle / {
-#         reverse_proxy web:3000
+
+# =============================================================================
+# Production template (uncomment and replace domain)
+# =============================================================================
+# scheduler.example.com {
+#
+#     # Caddy obtains and renews the TLS certificate automatically.
+#     # For Let's Encrypt to work the server must be publicly reachable on port 80/443.
+#
+#     header {
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#         X-Content-Type-Options "nosniff"
+#         X-Frame-Options "SAMEORIGIN"
+#         X-XSS-Protection "1; mode=block"
+#         Referrer-Policy "strict-origin-when-cross-origin"
+#         Permissions-Policy "camera=(), microphone=(), geolocation=()"
+#         -Server
 #     }
-#     
-#     # API (FastAPI)
+#
 #     handle /api/* {
-#         reverse_proxy api:8000
+#         reverse_proxy api:8000 {
+#             header_up X-Real-IP {remote_host}
+#             header_up X-Forwarded-For {remote_host}
+#             header_up X-Forwarded-Proto {scheme}
+#             health_uri     /health
+#             health_interval 15s
+#         }
 #     }
-#     
-#     # Published schedules
-#     handle /p/* {
-#         reverse_proxy web:3000
+#
+#     handle /* {
+#         reverse_proxy web:3000 {
+#             header_up X-Real-IP {remote_host}
+#             header_up X-Forwarded-For {remote_host}
+#             header_up X-Forwarded-Proto {scheme}
+#         }
 #     }
 # }

@@ -1,9 +1,13 @@
-__pycache__
-*.pyc
+# Secrets — never bake into image
+.env
+.env.*
+
+# Python cache
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
 .Python
-env
 pip-log.txt
 pip-delete-this-directory.txt
 .tox
@@ -14,7 +18,20 @@ nosetests.xml
 coverage.xml
 *.cover
 *.log
-.git
 .mypy_cache
 .pytest_cache
 .hypothesis
+htmlcov/
+
+# Test files (not needed in production image)
+tests/
+pytest.ini
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp

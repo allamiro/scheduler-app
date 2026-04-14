@@ -1,9 +1,25 @@
-node_modules
-.next
-.git
-.gitignore
-README.md
+# Runtime artefacts — rebuilt inside image
+node_modules/
+.next/
+out/
+
+# Secrets
+.env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Version control
+.git/
+.gitignore
+
+# Docs / config not needed in image
+README.md
+*.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
