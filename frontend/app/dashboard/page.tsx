@@ -14,40 +14,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, rectIntersection
 import { apiClient } from '@/lib/api'
 import { Schedule, Doctor, AssignmentType, ASSIGNMENT_TYPES } from '@/lib/types'
 import { getWeekStart, formatDateISO } from '@/lib/utils'
-import { Calendar, Users, LogOut, Bug, History, User, Sparkles } from 'lucide-react'
-
-// Debug logging system
-class DragDropLogger {
-  private logs: string[] = []
-  
-  log(message: string, data?: any) {
-    const timestamp = new Date().toISOString()
-    const logEntry = `[${timestamp}] ${message}${data ? `: ${JSON.stringify(data)}` : ''}`
-    this.logs.push(logEntry)
-    console.log(logEntry)
-  }
-  
-  getLogs() {
-    return this.logs
-  }
-  
-  clearLogs() {
-    this.logs = []
-  }
-  
-  exportLogs() {
-    const logText = this.logs.join('\n')
-    const blob = new Blob([logText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `drag-drop-debug-${Date.now()}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-}
-
-const logger = new DragDropLogger()
+import { Calendar, Users, LogOut, History, User, Sparkles } from 'lucide-react'
 
 // Droppable Approver/Preparer Box Component
 function DroppableApproverPreparerBox({ 
@@ -121,7 +88,6 @@ export default function DashboardPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [showDebugPanel, setShowDebugPanel] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeDoctor, setActiveDoctor] = useState<Doctor | null>(null)
   const [preparedBy, setPreparedBy] = useState<Doctor | null>(null) // Preparer assignment
@@ -135,25 +101,15 @@ export default function DashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      logger.log('Loading data for week', { week: formatDateISO(currentWeek) })
-      
       const [scheduleData, doctorsData, userData] = await Promise.all([
         apiClient.getScheduleByWeek(formatDateISO(currentWeek)),
         apiClient.getDoctors(),
         apiClient.getCurrentUser()
       ])
-      
-      logger.log('Data loaded successfully', {
-        scheduleId: scheduleData?.id,
-        doctorsCount: doctorsData.length,
-        userRole: userData?.role
-      })
-      
       setSchedule(scheduleData)
       setDoctors(doctorsData.filter(d => d.is_active))
       setUser(userData)
     } catch (error) {
-      logger.log('Failed to load data', { error: error instanceof Error ? error.message : 'Unknown error' })
       console.error('Failed to load data:', error)
       router.push('/login')
     } finally {
@@ -168,10 +124,6 @@ export default function DashboardPage() {
 
 
   const handleWeekChange = (newWeek: Date) => {
-    logger.log('Week changed', { 
-      from: formatDateISO(currentWeek), 
-      to: formatDateISO(newWeek) 
-    })
     setCurrentWeek(newWeek)
   }
 
@@ -181,40 +133,18 @@ export default function DashboardPage() {
     assignment_type: AssignmentType
   }) => {
     try {
-      logger.log('Starting assignment creation', assignment)
-      
-      if (!schedule?.id) {
-        logger.log('No schedule exists, creating new schedule')
-        // Create schedule if it doesn't exist
+      let scheduleId = schedule?.id
+      if (!scheduleId) {
         const newSchedule = await apiClient.createSchedule(formatDateISO(currentWeek))
-        logger.log('Schedule created', { scheduleId: newSchedule.id })
         setSchedule(newSchedule)
+        scheduleId = newSchedule.id
       }
-      
-      logger.log('Creating assignment via API', {
-        scheduleId: schedule?.id,
-        assignment
-      })
-      
-      const newAssignment = await apiClient.createAssignment(schedule?.id || 0, assignment)
-      
-      logger.log('Assignment created successfully', {
-        assignmentId: newAssignment.id,
-        doctorName: newAssignment.doctor_name
-      })
-      
+      const newAssignment = await apiClient.createAssignment(scheduleId, assignment)
       setSchedule(prev => prev ? {
         ...prev,
         assignments: [...prev.assignments, newAssignment]
       } : null)
-      
-      logger.log('Schedule state updated with new assignment')
-      
     } catch (error) {
-      logger.log('Assignment creation failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        assignment
-      })
       console.error('Failed to create assignment:', error)
       alert(error instanceof Error ? error.message : 'Failed to create assignment')
     }
@@ -223,22 +153,12 @@ export default function DashboardPage() {
   const handleAssignmentDelete = async (assignmentId: number) => {
     try {
       if (!schedule?.id) return
-      
-      logger.log('Deleting assignment', { assignmentId })
-      
       await apiClient.deleteAssignment(schedule.id, assignmentId)
       setSchedule(prev => prev ? {
         ...prev,
         assignments: prev.assignments.filter(a => a.id !== assignmentId)
       } : null)
-      
-      logger.log('Assignment deleted successfully', { assignmentId })
-      
     } catch (error) {
-      logger.log('Assignment deletion failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        assignmentId
-      })
       console.error('Failed to delete assignment:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete assignment')
     }
@@ -258,123 +178,69 @@ export default function DashboardPage() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    
-    console.log('Drag end event:', { activeId: active.id, overId: over?.id })
-    
+
     setActiveId(null)
     setActiveDoctor(null)
-    
-    if (!over) {
-      console.log('No drop target found')
-      return
-    }
-    
-    // Check if we're dropping on Approver/Preparer boxes
+
+    if (!over) return
+
+    // Dropping on Approver/Preparer boxes
     if ((over.id.toString() === 'prepared-by' || over.id.toString() === 'approved-by') && active.id.toString().startsWith('doctor-')) {
-      console.log('Dropping doctor on Approver/Preparer box')
-      
       const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
       const doctor = doctors.find(d => d.id === doctorId)
-      
-      if (!doctor) {
-        console.log('Doctor not found')
-        return
-      }
-      
+      if (!doctor) return
+
       if (over.id.toString() === 'prepared-by') {
         setPreparedBy(doctor)
-        console.log('Set prepared by:', doctor.name)
-      } else if (over.id.toString() === 'approved-by') {
+      } else {
         setApprovedBy(doctor)
-        console.log('Set approved by:', doctor.name)
       }
-      
       return
     }
-    
-    // Check if we're dropping on a schedule cell
+
+    // Dropping on a schedule cell
     if (over.id.toString().includes('||') && active.id.toString().startsWith('doctor-')) {
-      console.log('Dropping doctor on schedule cell')
-      console.log('Raw over.id:', over.id.toString())
-      console.log('Raw active.id:', active.id.toString())
-      
-      // Check user role first
       if (user?.role === 'viewer') {
-        console.log('Viewer cannot make assignments')
         alert('You do not have permission to make assignments!')
         return
       }
-      
+
       const doctorId = parseInt(active.id.toString().replace('doctor-', ''))
       const overIdParts = over.id.toString().split('||')
-      console.log('Split over.id parts:', overIdParts)
-      
-      if (overIdParts.length !== 2) {
-        console.log('Invalid droppable ID format:', over.id.toString())
-        alert('Invalid drop target format!')
-        return
-      }
-      
+
+      if (overIdParts.length !== 2) return
+
       const [dateStr, assignmentType] = overIdParts
-      
-      console.log('Assignment details:', { doctorId, dateStr, assignmentType })
-      console.log('Available assignment types:', ASSIGNMENT_TYPES.map(t => t.type))
-      console.log('Assignment type match check:', {
-        assignmentType,
-        isXray: assignmentType === 'xray',
-        isUltrasoundMorning: assignmentType === 'ultrasound_morning',
-        isCtScan: assignmentType === 'ct_scan'
-      })
-      
-      // Find the assignment type configuration
       const assignmentTypeConfig = ASSIGNMENT_TYPES.find(type => type.type === assignmentType)
-      
+
       if (!assignmentTypeConfig) {
-        console.log('Assignment type not found:', assignmentType)
-        console.log('Available types:', ASSIGNMENT_TYPES.map(t => t.type))
         alert(`Invalid assignment type: ${assignmentType}`)
         return
       }
-      
-      // Check if the doctor is available for this assignment
+
       const existingAssignments = schedule?.assignments.filter(
         a => a.assignment_date === dateStr && a.assignment_type === assignmentType
       ) || []
-      
-      console.log('Capacity check:', { 
-        existingCount: existingAssignments.length, 
-        maxCapacity: assignmentTypeConfig.capacity,
-        assignmentType: assignmentTypeConfig.label,
-        assignmentTypeKey: assignmentType
-      })
-      
-      // Check capacity
+
       if (existingAssignments.length >= assignmentTypeConfig.capacity) {
-        console.log('Assignment at capacity')
         alert(`This assignment is at capacity! (${existingAssignments.length}/${assignmentTypeConfig.capacity})`)
         return
       }
-      
-      // Check if doctor is already assigned to this date
+
       const doctorAssignedToday = schedule?.assignments.some(
         a => a.doctor_id === doctorId && a.assignment_date === dateStr
       )
-      
+
       if (doctorAssignedToday) {
-        console.log('Doctor already assigned today')
         alert('This doctor is already assigned to this date!')
         return
       }
-      
-      console.log('Creating assignment')
-      // Create the assignment
+
       handleAssignmentCreate({
         doctor_id: doctorId,
         assignment_date: dateStr,
         assignment_type: assignmentType as AssignmentType
       })
-    } else {
-      console.log('Invalid drop target or not a doctor')
     }
   }
 
@@ -451,17 +317,6 @@ export default function DashboardPage() {
               </Button>
             )}
 
-            {/* Debug Panel Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
-              className="flex items-center gap-2 rounded-full border-white/20 bg-white/10 text-white transition hover:bg-white/20"
-            >
-              <Bug className="h-4 w-4" />
-              <span>Debug</span>
-            </Button>
-
             <Button
               variant="outline"
               onClick={handleLogout}
@@ -473,60 +328,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
-
-      {/* Debug Panel */}
-      {showDebugPanel && (
-        <div className="border-b border-white/10 bg-white/5">
-          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <h3 className="text-lg font-semibold text-white">Drag &amp; Drop Debug Panel</h3>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => logger.clearLogs()}
-                  className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20"
-                >
-                  Clear Logs
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => logger.exportLogs()}
-                  className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20"
-                >
-                  Export Logs
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 max-h-64 overflow-y-auto rounded-2xl border border-white/15 bg-slate-950/60 p-4 text-indigo-100">
-              <pre className="whitespace-pre-wrap text-xs">
-                {logger.getLogs().join('\n')}
-              </pre>
-            </div>
-
-            <div className="mt-4 grid gap-4 text-sm text-indigo-100/85 sm:grid-cols-2">
-              <div>
-                <strong className="text-white">Current State:</strong>
-                <ul className="mt-1 space-y-1">
-                  <li>Schedule ID: {schedule?.id || 'None'}</li>
-                  <li>Doctors Count: {doctors.length}</li>
-                  <li>Assignments Count: {schedule?.assignments.length || 0}</li>
-                  <li>Current Week: {formatDateISO(currentWeek)}</li>
-                </ul>
-              </div>
-              <div>
-                <strong className="text-white">Swapy State:</strong>
-                <ul className="mt-1 space-y-1">
-                  <li>Swapy Container: {document.querySelector('.swapy-container') ? 'Found' : 'Not Found'}</li>
-                  <li>Doctors with data-swapy-item: {doctors.length}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Content */}
       <DndContext

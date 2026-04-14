@@ -118,7 +118,9 @@ async def create_doctor(
     db_doctor = Doctor(
         name=doctor_data.name,
         email=doctor_data.email,
-        phone=doctor_data.phone
+        phone=doctor_data.phone,
+        position=doctor_data.position,
+        status=doctor_data.status
     )
     db.add(db_doctor)
     db.commit()
@@ -171,7 +173,10 @@ async def update_doctor(
     
     if doctor_data.phone is not None:
         doctor.phone = doctor_data.phone
-    
+
+    if doctor_data.position is not None:
+        doctor.position = doctor_data.position
+
     if doctor_data.is_active is not None:
         doctor.is_active = doctor_data.is_active
     

@@ -15,6 +15,7 @@ export default function PublishedSchedulePage() {
 
   useEffect(() => {
     loadPublishedSchedule()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   const loadPublishedSchedule = async () => {

@@ -8,6 +8,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Dict, Any
 import uuid
 import json
+from html import escape as html_escape
 
 router = APIRouter()
 
@@ -40,7 +41,7 @@ def validate_schedule_completeness(assignments: List[Assignment], week_dates: Li
         # Convert datetime to date for comparison
         date_only = date_obj.date() if hasattr(date_obj, 'date') else date_obj
         weekday = date_only.weekday()  # 0=Monday, 6=Sunday
-        is_weekend = weekday >= 5  # Saturday=5, Sunday=6
+        is_weekend = weekday >= 4  # Friday=4, Saturday=5, Sunday=6 — only Duty required
         
         required_types = weekend_types if is_weekend else weekday_types
         day_name = date_only.strftime('%A')
@@ -231,7 +232,7 @@ def generate_schedule_html(schedule_data: Dict[str, Any], published_at: str, pre
             
             html += f'<td class="assignment-cell">'
             for doctor in doctors:
-                html += f'<div class="doctor-name">{doctor["name"]}</div>'
+                html += f'<div class="doctor-name">{html_escape(doctor["name"])}</div>'
             html += '</td>'
         
         html += '</tr>'

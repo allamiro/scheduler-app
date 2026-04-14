@@ -60,14 +60,12 @@ app.include_router(published.router, prefix="/api/published", tags=["published"]
 async def health_check():
     """Health check endpoint"""
     try:
-        # Check database connection
-        db = next(get_db())
         from sqlalchemy import text
-        db.execute(text("SELECT 1"))
-        
-        # Check Redis connection
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+
         redis_client.ping()
-        
+
         return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
